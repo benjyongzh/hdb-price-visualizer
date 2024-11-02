@@ -1,4 +1,10 @@
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  ZoomControl,
+} from "react-leaflet";
 // import L, { Icon } from 'leaflet';
 import "leaflet/dist/leaflet.css";
 import { GeoJSON } from "react-leaflet";
@@ -15,8 +21,10 @@ const Map = (props: { geojsonData: Array<GeoJsonObject> }) => {
     <MapContainer
       center={position}
       zoom={12}
+      zoomControl={false}
       style={{ height: "100vh", width: "100%" }}
     >
+      <ZoomControl position="bottomright" />
       <TileLayer
         url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/dark_all/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'

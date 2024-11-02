@@ -1,5 +1,15 @@
 import "leaflet/dist/leaflet.css";
 import { useState } from "react";
+import { ThemeProvider } from "./components/theme-provider";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 import Map from "./components/Map";
 // import { GeoJSON } from "leaflet";
@@ -36,18 +46,21 @@ function App() {
 
   return (
     <div className="App">
-      <section className="flex flex-col gap-3 border-2 m-8 self-center max-w-2xl bg-orange-500">
-        <header className="text-center">Controls</header>
-        <section className="flex gap-2">
-          <button onClick={() => fetchData()} type="button">
-            click me
-          </button>
-        </section>
-      </section>
+      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <Card className="flex flex-col m-6 self-start w-full max-w-md backdrop-blur">
+          <CardHeader>
+            <CardTitle>Controls</CardTitle>
+            <CardDescription>Select HDB Resale price data</CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-2">
+            <Button onClick={() => fetchData()}>Click me</Button>
+          </CardContent>
+        </Card>
 
-      <div className="absolute w-full h-full -z-10">
-        <Map geojsonData={geojsonData} />
-      </div>
+        <div className="absolute w-full h-full -z-10">
+          <Map geojsonData={geojsonData} />
+        </div>
+      </ThemeProvider>
     </div>
   );
 }
