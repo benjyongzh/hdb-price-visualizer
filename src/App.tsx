@@ -1,5 +1,5 @@
 import "leaflet/dist/leaflet.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import {
   Card,
@@ -19,6 +19,8 @@ const url: string = import.meta.env.VITE_API_URL + "/api/polygons/latest-avg/";
 
 function App() {
   const [geojsonData, setGeojsonData] = useState<Array<GeoJsonObject>>([]);
+  const [flatTypes, setFlatTypes] = useState<Array<string>>([]);
+  const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
   // const [status, setStatus] = useState<Boolean>();
 
   // Fetch geojson data stream
@@ -44,16 +46,48 @@ function App() {
     }
   };
 
+  const toggleflatTypeFilter = (type: string) => {
+    console.log("toggle flat type:", type);
+  };
+
+  useEffect(() => {
+    const getFlatTypes = async () => {
+      const flatTypesUrl: string = "";
+      setLoadingFlatTypes(true);
+      try {
+        const response = await fetch(flatTypesUrl);
+        const types: string[] = await response.json();
+        setFlatTypes(types); // Update map with new data
+        setLoadingFlatTypes(false);
+      } catch (error) {
+        console.error("Error getting flat types:", error);
+        setLoadingFlatTypes(false);
+      }
+    };
+
+    getFlatTypes();
+  }, []);
+
   return (
     <div className="App">
       <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
         <Card className="flex flex-col m-6 self-start w-full max-w-md backdrop-blur">
           <CardHeader>
-            <CardTitle>Controls</CardTitle>
-            <CardDescription>Select HDB Resale price data</CardDescription>
+            <CardTitle>HDB Resale Price Data</CardTitle>
+            <CardDescription>
+              Select and filter data to visualize
+            </CardDescription>
           </CardHeader>
-          <CardContent className="flex gap-2">
-            <Button onClick={() => fetchData()}>Click me</Button>
+          <CardContent className="flex flex-col gap-2">
+            <section className="flex">
+              {/* get data of all hdb flat types */}
+              {flatTypes.map((type) => (
+                <Button onClick={() => toggleflatTypeFilter(type)}>
+                  {type}
+                </Button>
+              ))}
+            </section>
+            <Button onClick={() => fetchData()}>Latest per block</Button>
           </CardContent>
         </Card>
 
