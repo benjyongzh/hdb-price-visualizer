@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 import Map from "./components/Map";
-// import { GeoJSON } from "leaflet";
+import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { GeoJsonObject } from "geojson";
 
 const url: string = import.meta.env.VITE_API_URL + "/api/polygons/latest-avg/";
@@ -46,10 +46,6 @@ function App() {
     }
   };
 
-  const toggleflatTypeFilter = (type: string) => {
-    console.log("toggle flat type:", type);
-  };
-
   useEffect(() => {
     const getFlatTypes = async () => {
       const flatTypesUrl: string = "";
@@ -58,10 +54,10 @@ function App() {
         const response = await fetch(flatTypesUrl);
         const types: string[] = await response.json();
         setFlatTypes(types); // Update map with new data
-        setLoadingFlatTypes(false);
+        // setLoadingFlatTypes(false);
       } catch (error) {
         console.error("Error getting flat types:", error);
-        setLoadingFlatTypes(false);
+        // setLoadingFlatTypes(false);
       }
     };
 
@@ -79,13 +75,14 @@ function App() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            <section className="flex">
-              {/* get data of all hdb flat types */}
-              {flatTypes.map((type) => (
-                <Button onClick={() => toggleflatTypeFilter(type)}>
-                  {type}
-                </Button>
-              ))}
+            <section className="flex gap-2">
+              {loadingFlatTypes
+                ? Array.from({ length: 4 }).map((_item, index) => (
+                    <FilterButtonSkeleton key={index} />
+                  ))
+                : flatTypes.map((type) => (
+                    <FilterButton filterCategory={type} />
+                  ))}
             </section>
             <Button onClick={() => fetchData()}>Latest per block</Button>
           </CardContent>
