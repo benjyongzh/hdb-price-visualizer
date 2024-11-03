@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import Map from "./components/Map";
 import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { GeoJsonObject } from "geojson";
+import { getRandomIntInclusive } from "./lib/utils";
 
 const url: string = import.meta.env.VITE_API_URL + "/api/polygons/latest-avg/";
 
@@ -75,10 +76,13 @@ function App() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
-            <section className="flex gap-2">
+            <section className="flex gap-2 flex-wrap">
               {loadingFlatTypes
-                ? Array.from({ length: 4 }).map((_item, index) => (
-                    <FilterButtonSkeleton key={index} />
+                ? Array.from({ length: 6 }).map((_item, index) => (
+                    <FilterButtonSkeleton
+                      key={index}
+                      length={getRandomIntInclusive(60, 150)}
+                    />
                   ))
                 : flatTypes.map((type) => (
                     <FilterButton filterCategory={type} />

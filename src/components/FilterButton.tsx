@@ -20,13 +20,15 @@ export const FilterButton = (props: { filterCategory: string }) => {
   );
 };
 
-export const FilterButtonSkeleton = () => {
+export const FilterButtonSkeleton = (props: { length: number }) => {
   return (
-    <Skeleton
-      className={buttonVariants({
-        size: "sm",
-        className: "filterButton w-24",
-      })}
-    />
+    <div style={{ width: `${props.length}px` }}>
+      <Skeleton
+        className={buttonVariants({
+          size: "sm",
+          className: `filterButton w-full`,
+        })}
+      />
+    </div>
   );
 };
