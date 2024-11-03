@@ -1,14 +1,9 @@
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  ZoomControl,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Popup, ZoomControl } from "react-leaflet";
 // import L, { Icon } from 'leaflet';
 import "leaflet/dist/leaflet.css";
 import { GeoJSON } from "react-leaflet";
 import { GeoJsonObject } from "geojson";
+import VectorTileLayer from "react-leaflet-vector-tile-layer";
 
 // import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 // import markerShadowPng from 'leaflet/dist/images/marker-shadow.png';
@@ -25,9 +20,11 @@ const Map = (props: { geojsonData: Array<GeoJsonObject> }) => {
       style={{ height: "100vh", width: "100%" }}
     >
       <ZoomControl position="bottomright" />
-      <TileLayer
-        url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/rastertiles/dark_all/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
+      <VectorTileLayer
+        styleUrl={`https://api.maptiler.com/maps/dataviz-dark/style.json?key=${
+          import.meta.env.VITE_MAP_API_KEY
+        }`}
+        attribution={`<a href="https://www.maptiler.com/copyright/" target="_blank">&copy; MapTiler</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>`}
       />
 
       {props.geojsonData.length > 0 &&
