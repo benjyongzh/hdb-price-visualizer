@@ -98,5 +98,5 @@ body {
 }
 
 .filterButton {
-  @apply h-6;
+  @apply h-6 text-xs;
 }

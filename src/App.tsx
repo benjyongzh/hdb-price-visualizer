@@ -16,7 +16,7 @@ import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { GeoJsonObject } from "geojson";
 import { getRandomIntInclusive } from "./lib/utils";
 
-const url: string = import.meta.env.VITE_API_URL + "/api/polygons/latest-avg/";
+const url: string = import.meta.env.VITE_API_URL + "/polygons/latest-avg/";
 
 function App() {
   const [geojsonData, setGeojsonData] = useState<Array<GeoJsonObject>>([]);
@@ -49,16 +49,17 @@ function App() {
 
   useEffect(() => {
     const getFlatTypes = async () => {
-      const flatTypesUrl: string = "";
+      const flatTypesUrl: string =
+        import.meta.env.VITE_API_URL + "/flat-types/";
       setLoadingFlatTypes(true);
       try {
         const response = await fetch(flatTypesUrl);
-        const types: string[] = await response.json();
-        setFlatTypes(types); // Update map with new data
-        // setLoadingFlatTypes(false);
+        const data = await response.json();
+        setFlatTypes(data.results); // Update map with new data
+        setLoadingFlatTypes(false);
       } catch (error) {
         console.error("Error getting flat types:", error);
-        // setLoadingFlatTypes(false);
+        setLoadingFlatTypes(false);
       }
     };
 
@@ -85,7 +86,7 @@ function App() {
                     />
                   ))
                 : flatTypes.map((type) => (
-                    <FilterButton filterCategory={type} />
+                    <FilterButton filterCategory={type} key={type} />
                   ))}
             </section>
             <Button onClick={() => fetchData()}>Latest per block</Button>

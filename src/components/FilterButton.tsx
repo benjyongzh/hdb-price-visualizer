@@ -13,6 +13,7 @@ export const FilterButton = (props: { filterCategory: string }) => {
     <Button
       size="sm"
       className="filterButton"
+      //TODO make state depend on filter state
       onClick={() => toggleflatTypeFilter(filterCategory)}
     >
       {filterCategory}
