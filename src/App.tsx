@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -13,37 +12,49 @@ import { Button } from "@/components/ui/button";
 
 import Map from "./components/Map";
 import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
-import { GeoJsonObject } from "geojson";
 import { getRandomIntInclusive } from "./lib/utils";
+import { GeoJsonData } from "@/lib/types";
 
 const url: string = import.meta.env.VITE_API_URL + "/polygons/latest-avg/";
 
+import "mapbox-gl/dist/mapbox-gl.css";
+
+const initialGeoJsonData: GeoJsonData = {
+  type: "FeatureCollection",
+  features: [],
+};
+
 function App() {
-  const [geojsonData, setGeojsonData] = useState<Array<GeoJsonObject>>([]);
+  const [geojsonData, setGeojsonData] =
+    useState<GeoJsonData>(initialGeoJsonData);
   const [flatTypes, setFlatTypes] = useState<Array<string>>([]);
   const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
   // const [status, setStatus] = useState<Boolean>();
 
   // Fetch geojson data stream
   const fetchData = async () => {
-    const response = await fetch(url);
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
+    const response = await fetch(url); // Your Django API endpoint
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder("utf-8");
 
-    let result;
-    let receivedData: GeoJsonObject[] = [];
-    while (!(result = await reader.read()).done) {
-      const chunk = decoder.decode(result.value, { stream: true });
-      const lines = chunk.split("\n").filter(Boolean);
-      lines.forEach((line) => {
-        try {
-          const feature = JSON.parse(line);
-          receivedData.push(feature);
-        } catch (error) {
-          console.error("Error parsing JSON:", error);
-        }
-      });
-      setGeojsonData([...receivedData]); // Update map with new data
+    if (!reader) return;
+
+    let done = false;
+
+    while (!done) {
+      const { done: streamDone, value } = await reader.read();
+      done = streamDone;
+      const chunk = decoder.decode(value, { stream: !done });
+
+      try {
+        const geoJsonBatch = JSON.parse(chunk) as GeoJsonData;
+        setGeojsonData((prevData) => ({
+          ...prevData,
+          features: [...prevData.features, ...geoJsonBatch.features],
+        }));
+      } catch (error) {
+        console.error("Error parsing GeoJSON batch:", error);
+      }
     }
   };
 
