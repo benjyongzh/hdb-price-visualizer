@@ -1,4 +1,4 @@
-import "leaflet/dist/leaflet.css";
+import "mapbox-gl/dist/mapbox-gl.css";
 import { useState, useEffect } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import {
@@ -16,8 +16,6 @@ import { getRandomIntInclusive } from "./lib/utils";
 import { GeoJsonData } from "@/lib/types";
 
 const url: string = import.meta.env.VITE_API_URL + "/polygons/latest-avg/";
-
-import "mapbox-gl/dist/mapbox-gl.css";
 
 const initialGeoJsonData: GeoJsonData = {
   type: "FeatureCollection",
@@ -78,9 +76,9 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <Card className="flex flex-col m-6 self-start w-full max-w-md backdrop-blur">
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <div className="App">
+        <Card className="z-10 flex flex-col m-6 self-start w-full max-w-md backdrop-blur">
           <CardHeader>
             <CardTitle>HDB Resale Price Data</CardTitle>
             <CardDescription>
@@ -104,11 +102,11 @@ function App() {
           </CardContent>
         </Card>
 
-        <div className="absolute w-full h-full -z-10">
+        <div className="absolute w-full h-full">
           <Map geojsonData={geojsonData} />
         </div>
-      </ThemeProvider>
-    </div>
+      </div>
+    </ThemeProvider>
   );
 }
 
