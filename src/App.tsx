@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import Map from "./components/Map";
 import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { getRandomIntInclusive } from "./lib/utils";
-import { GeoJsonData } from "@/lib/types";
+import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 
 const url: string = import.meta.env.VITE_API_URL + "/polygons/latest-avg/";
 
@@ -38,20 +38,31 @@ function App() {
     if (!reader) return;
 
     let done = false;
+    let bufferedData = "";
 
     while (!done) {
       const { done: streamDone, value } = await reader.read();
       done = streamDone;
-      const chunk = decoder.decode(value, { stream: !done });
+      bufferedData += decoder.decode(value, { stream: !done });
 
-      try {
-        const geoJsonBatch = JSON.parse(chunk) as GeoJsonData;
-        setGeojsonData((prevData) => ({
-          ...prevData,
-          features: [...prevData.features, ...geoJsonBatch.features],
-        }));
-      } catch (error) {
-        console.error("Error parsing GeoJSON batch:", error);
+      // Split on newline to handle NDJSON format
+      const lines = bufferedData.split("\n");
+      // Keep the last line as a buffer in case it's incomplete
+      bufferedData = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.trim()) {
+          // Ensure non-empty line
+          try {
+            const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
+            setGeojsonData((prevData) => ({
+              ...prevData,
+              features: [...prevData.features, geoJsonBatch],
+            }));
+          } catch (parseError) {
+            console.error("Failed to parse GeoJSON batch:", parseError, line);
+          }
+        }
       }
     }
   };

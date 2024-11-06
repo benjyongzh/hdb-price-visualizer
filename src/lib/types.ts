@@ -1,4 +1,5 @@
 export interface GeoJsonFeature {
+  id: number;
   type: "Feature";
   geometry: {
     type: "Polygon";
