@@ -27,6 +27,7 @@ function App() {
     useState<GeoJsonData>(initialGeoJsonData);
   const [flatTypes, setFlatTypes] = useState<Array<string>>([]);
   const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
+  const [valueRange, setValueRange] = useState<[number, number]>([0, 0]);
   // const [status, setStatus] = useState<Boolean>();
 
   // Fetch geojson data stream
@@ -55,6 +56,17 @@ function App() {
           // Ensure non-empty line
           try {
             const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
+            console.log("geoJsonBatch", geoJsonBatch);
+            const price: number = geoJsonBatch.properties.latest_price;
+            console.log("price", price);
+            if (
+              geojsonData.features.length > 10 &&
+              (valueRange[0] === 0 || valueRange[0] > price)
+            )
+              setValueRange([price, valueRange[1]]);
+            if (valueRange[1] < price) setValueRange([valueRange[0], price]);
+            console.log("valueRange", valueRange);
+
             setGeojsonData((prevData) => ({
               ...prevData,
               features: [...prevData.features, geoJsonBatch],
@@ -114,7 +126,7 @@ function App() {
         </Card>
 
         <div className="absolute w-full h-full">
-          <Map geojsonData={geojsonData} />
+          <Map geojsonData={geojsonData} valueRange={valueRange} />
         </div>
       </div>
     </ThemeProvider>

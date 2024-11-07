@@ -11,16 +11,6 @@ import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 
 const position: [number, number] = [1.36025, 103.818758];
 
-// Define Layer styles for the GeoJSON
-const geoJsonLayerStyle: LayerProps = {
-  id: "geojson-layer",
-  type: "fill",
-  paint: {
-    "fill-color": "#088",
-    "fill-opacity": 0.6,
-  },
-};
-
 const lineLayerStyle: LayerProps = {
   id: "geojson-line-layer",
   type: "line",
@@ -39,12 +29,34 @@ const initialViewPortState: ViewState = {
   padding: { top: 0, bottom: 0, left: 0, right: 0 },
 };
 
-const MapComponent = (props: { geojsonData: GeoJsonData }) => {
+const MapComponent = (props: {
+  geojsonData: GeoJsonData;
+  valueRange: [number, number];
+}) => {
   const [viewState, setViewState] = useState(initialViewPortState);
 
   const [selectedFeature, setSelectedFeature] = useState<GeoJsonFeature | null>(
     null
   );
+
+  // Define Layer styles with an interpolated color expression
+  const geoJsonLayerStyle: LayerProps = {
+    id: "geojson-layer",
+    type: "fill",
+    paint: {
+      // Color interpolation based on the "price" property of each feature
+      "fill-color": [
+        "interpolate",
+        ["linear"],
+        ["get", "latest_price"], // The property to base the color on
+        props.valueRange[0],
+        "#FF0000", // Lowest price -> Red
+        props.valueRange[1],
+        "#0000FF", // Highest price -> Blue
+      ],
+      "fill-opacity": 0.6,
+    },
+  };
 
   // Handle feature click event
   const onMapClick = (event: MapLayerMouseEvent) => {
@@ -73,16 +85,7 @@ const MapComponent = (props: { geojsonData: GeoJsonData }) => {
       </Map>
 
       {selectedFeature && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 30,
-            left: 30,
-            backgroundColor: "white",
-            padding: "10px",
-            borderRadius: "8px",
-          }}
-        >
+        <div className="absolute bottom-8 left-8 p-2 border-r-8 bg-primary text-primary-foreground">
           <h3>Feature Info</h3>
           <pre>{JSON.stringify(selectedFeature.properties, null, 2)}</pre>
           <button onClick={() => setSelectedFeature(null)}>Close</button>
