@@ -11,14 +11,8 @@ import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 
 const position: [number, number] = [1.36025, 103.818758];
 
-const lineLayerStyle: LayerProps = {
-  id: "geojson-line-layer",
-  type: "line",
-  paint: {
-    "line-color": "#088",
-    "line-width": 2,
-  },
-};
+const minPriceColour: string = "hsl(119, 100%, 56%)";
+const maxPriceColour: string = "hsl(0, 100%, 56%)";
 
 const initialViewPortState: ViewState = {
   latitude: position[0],
@@ -40,6 +34,23 @@ const MapComponent = (props: { geojsonData: GeoJsonData }) => {
   );
 
   // Define Layer styles with an interpolated color expression
+  const lineLayerStyle: LayerProps = {
+    id: "geojson-line-layer",
+    type: "line",
+    paint: {
+      "line-color": [
+        "interpolate",
+        ["linear"],
+        ["get", "latest_price"], // The property to base the color on
+        minPrice,
+        minPriceColour, // Lowest price -> Red
+        maxPrice,
+        maxPriceColour, // Highest price -> Blue
+      ],
+      "line-width": 2,
+    },
+  };
+
   const geoJsonLayerStyle: LayerProps = {
     id: "geojson-layer",
     type: "fill",
@@ -50,9 +61,9 @@ const MapComponent = (props: { geojsonData: GeoJsonData }) => {
         ["linear"],
         ["get", "latest_price"], // The property to base the color on
         minPrice,
-        "#FF0000", // Lowest price -> Red
+        minPriceColour, // Lowest price -> Red
         maxPrice,
-        "#0000FF", // Highest price -> Blue
+        maxPriceColour, // Highest price -> Blue
       ],
       "fill-opacity": 0.6,
     },
