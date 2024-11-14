@@ -23,11 +23,12 @@ const initialViewPortState: ViewState = {
   padding: { top: 0, bottom: 0, left: 0, right: 0 },
 };
 
-const MapComponent = (props: { geojsonData: GeoJsonData }) => {
+const MapComponent = (props: {
+  geojsonData: GeoJsonData;
+  minPrice: number;
+  maxPrice: number;
+}) => {
   const [viewState, setViewState] = useState(initialViewPortState);
-  const [minPrice, setMinPrice] = useState<number>(0);
-  const [maxPrice, setMaxPrice] = useState<number>(1);
-  const debounceDelay = 300; // debounce delay in milliseconds
 
   const [selectedFeature, setSelectedFeature] = useState<GeoJsonFeature | null>(
     null
@@ -42,9 +43,9 @@ const MapComponent = (props: { geojsonData: GeoJsonData }) => {
         "interpolate",
         ["linear"],
         ["get", "latest_price"], // The property to base the color on
-        minPrice,
+        props.minPrice,
         minPriceColour, // Lowest price -> Red
-        maxPrice,
+        props.maxPrice,
         maxPriceColour, // Highest price -> Blue
       ],
       "line-width": 2,
@@ -60,43 +61,14 @@ const MapComponent = (props: { geojsonData: GeoJsonData }) => {
         "interpolate",
         ["linear"],
         ["get", "latest_price"], // The property to base the color on
-        minPrice,
+        props.minPrice,
         minPriceColour, // Lowest price -> Red
-        maxPrice,
+        props.maxPrice,
         maxPriceColour, // Highest price -> Blue
       ],
       "fill-opacity": 0.6,
     },
   };
-
-  // Calculate min and max prices without setting state immediately
-  const computedPrices: {
-    minPrice: number;
-    maxPrice: number;
-  } = useMemo(() => {
-    const pricesArray: number[] = props.geojsonData.features.map(
-      (feature) => feature.properties.latest_price
-    );
-    return {
-      minPrice: Math.min(...pricesArray),
-      maxPrice: Math.max(...pricesArray),
-    };
-  }, [props.geojsonData.features.length]);
-
-  useEffect(() => {
-    // Set a debounce timer to update minPrice and maxPrice
-    const timer = setTimeout(() => {
-      setMaxPrice(computedPrices.maxPrice);
-      setMinPrice(
-        computedPrices.maxPrice === computedPrices.minPrice
-          ? 0
-          : computedPrices.minPrice
-      );
-    }, debounceDelay);
-
-    // Clear timeout if prices change again within the debounce period
-    return () => clearTimeout(timer);
-  }, [computedPrices, debounceDelay]);
 
   // Handle feature click event
   const onMapClick = (event: MapLayerMouseEvent) => {

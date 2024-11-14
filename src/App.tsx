@@ -1,5 +1,5 @@
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import {
   Card,
@@ -27,7 +27,25 @@ function App() {
     useState<GeoJsonData>(initialGeoJsonData);
   const [flatTypes, setFlatTypes] = useState<Array<string>>([]);
   const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
+
+  const [minPrice, setMinPrice] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number>(1);
+  const debounceDelay = 300; // debounce delay in milliseconds
   // const [status, setStatus] = useState<Boolean>();
+
+  // Calculate min and max prices without setting state immediately
+  const computedPrices: {
+    minPrice: number;
+    maxPrice: number;
+  } = useMemo(() => {
+    const pricesArray: number[] = geojsonData.features.map(
+      (feature) => feature.properties.latest_price
+    );
+    return {
+      minPrice: Math.min(...pricesArray),
+      maxPrice: Math.max(...pricesArray),
+    };
+  }, [geojsonData.features.length]);
 
   // Fetch geojson data stream
   const fetchData = async () => {
@@ -98,6 +116,21 @@ function App() {
     getFlatTypes();
   }, []);
 
+  useEffect(() => {
+    // Set a debounce timer to update minPrice and maxPrice
+    const timer = setTimeout(() => {
+      setMaxPrice(computedPrices.maxPrice);
+      setMinPrice(
+        computedPrices.maxPrice === computedPrices.minPrice
+          ? 0
+          : computedPrices.minPrice
+      );
+    }, debounceDelay);
+
+    // Clear timeout if prices change again within the debounce period
+    return () => clearTimeout(timer);
+  }, [computedPrices, debounceDelay]);
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <div className="App">
@@ -126,7 +159,11 @@ function App() {
         </Card>
 
         <div className="absolute w-full h-full">
-          <Map geojsonData={geojsonData} />
+          <Map
+            geojsonData={geojsonData}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+          />
         </div>
       </div>
     </ThemeProvider>
