@@ -8,7 +8,7 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => response,
   (error) => {
     console.error("API call failed:", error);
     // Handle specific error cases

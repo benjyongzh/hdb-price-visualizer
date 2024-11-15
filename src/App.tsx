@@ -116,16 +116,15 @@ function App() {
     }
   };
 
+  //get flat types
   useEffect(() => {
     const getFlatTypes = async () => {
-      const flatTypesUrl: string =
-        import.meta.env.VITE_API_URL + "/flat-types/";
       setLoadingFlatTypes(true);
       try {
-        const response = await fetch(flatTypesUrl);
-        const data = await response.json();
-        setFlatTypes(data.results); // Update map with new data
-        setLoadingFlatTypes(false);
+        await apiService.getFlatTypes().then((res) => {
+          setFlatTypes(res); // Update map with new data
+          setLoadingFlatTypes(false);
+        });
       } catch (error) {
         console.log("Error getting Flat Types:", error);
         setFlatTypes("Error getting flat Types"); // Update map with new data
