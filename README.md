@@ -1,50 +1,10 @@
-# React + TypeScript + Vite
+# HDB Price Visualizer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+View past transactions of all HDB in Singapore, based on transactions since 2017.
 
-Currently, two official plugins are available:
+## Design plans based on user stories
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+- Prioritise viewing of flats based on budget (max value). show all flats within budget (map shows location)
+  - What value to use? there are differences between unit types and storey levels. as long as any transaction within the past 2 years (configurable) fall within budget, show in green. else, grey out
+- Show locations of mrt stations in map
+- onClick of a block, show more details, like types of units, past 3 transactions of each unit, with info on floor level for each transaction
