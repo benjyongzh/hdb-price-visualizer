@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -42,40 +42,44 @@ const MapComponent = (props: {
   );
 
   // Define Layer styles with an interpolated color expression
-  const lineLayerStyle: LayerProps = {
-    id: "geojson-line-layer",
-    type: "line",
-    paint: {
-      "line-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "latest_price"], // The property to base the color on
-        props.minPrice,
-        minPriceColour, // Lowest price -> Red
-        props.maxPrice,
-        maxPriceColour, // Highest price -> Blue
-      ],
-      "line-width": 2,
-    },
-  };
+  const lineLayerStyle: LayerProps = useMemo(() => {
+    return {
+      id: "geojson-line-layer",
+      type: "line",
+      paint: {
+        "line-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "latest_price"], // The property to base the color on
+          props.minPrice,
+          minPriceColour, // Lowest price -> Red
+          props.maxPrice,
+          maxPriceColour, // Highest price -> Blue
+        ],
+        "line-width": 2,
+      },
+    };
+  }, [props.minPrice, props.maxPrice]);
 
-  const geoJsonLayerStyle: LayerProps = {
-    id: "geojson-layer",
-    type: "fill",
-    paint: {
-      // Color interpolation based on the "price" property of each feature
-      "fill-color": [
-        "interpolate",
-        ["linear"],
-        ["get", "latest_price"], // The property to base the color on
-        props.minPrice,
-        minPriceColour, // Lowest price -> Red
-        props.maxPrice,
-        maxPriceColour, // Highest price -> Blue
-      ],
-      "fill-opacity": 0.6,
-    },
-  };
+  const geoJsonLayerStyle: LayerProps = useMemo(() => {
+    return {
+      id: "geojson-layer",
+      type: "fill",
+      paint: {
+        // Color interpolation based on the "price" property of each feature
+        "fill-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "latest_price"], // The property to base the color on
+          props.minPrice,
+          minPriceColour, // Lowest price -> Red
+          props.maxPrice,
+          maxPriceColour, // Highest price -> Blue
+        ],
+        "fill-opacity": 0.6,
+      },
+    };
+  }, [props.minPrice, props.maxPrice]);
 
   // Handle feature click event
   const onMapClick = (event: MapLayerMouseEvent) => {
@@ -103,24 +107,25 @@ const MapComponent = (props: {
         </Source>
       </Map>
 
-      {selectedFeature && (
+      {/*selectedFeature && (
         // <div className="absolute bottom-8 left-8 p-2 border-r-8 bg-primary text-primary-foreground">
         //   <h3>Feature Info</h3>
         //   <pre>{JSON.stringify(selectedFeature.properties, null, 2)}</pre>
         //   <button onClick={() => setSelectedFeature(null)}>Close</button>
         // </div>
+
         // <Card className="z-10 flex flex-col m-6 self-start w-full max-w-md backdrop-blur">
         //   <CardHeader>
         //     <CardTitle>
         //       {selectedFeature.properties.block}{" "}
         //       {selectedFeature.properties.street_name}
         //     </CardTitle>
-        //     {/* <CardDescription>
+        //     <CardDescription>
         //       Select and filter data to visualize
-        //     </CardDescription> */}
+        //     </CardDescription>
         //   </CardHeader>
         //   <CardContent className="flex flex-col gap-2">
-        //     {/* show postal code, a table of all units and the last 3 transactions of each unit () */}
+        //     //show postal code, a table of all units and the last 3 transactions of each unit ()
         //     <section className="flex gap-2 flex-wrap">
         //       {loadingFlatTypes
         //         ? Array.from({ length: 6 }).map((_item, index) => (
@@ -136,7 +141,7 @@ const MapComponent = (props: {
         //     <Button onClick={() => setSelectedFeature(null)}>Close</Button>
         //   </CardContent>
         // </Card>
-      )}
+       )*/}
     </div>
   );
 };
