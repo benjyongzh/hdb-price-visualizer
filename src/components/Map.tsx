@@ -1,4 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  // CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 import Map, {
   ViewState,
@@ -97,11 +104,38 @@ const MapComponent = (props: {
       </Map>
 
       {selectedFeature && (
-        <div className="absolute bottom-8 left-8 p-2 border-r-8 bg-primary text-primary-foreground">
-          <h3>Feature Info</h3>
-          <pre>{JSON.stringify(selectedFeature.properties, null, 2)}</pre>
-          <button onClick={() => setSelectedFeature(null)}>Close</button>
-        </div>
+        // <div className="absolute bottom-8 left-8 p-2 border-r-8 bg-primary text-primary-foreground">
+        //   <h3>Feature Info</h3>
+        //   <pre>{JSON.stringify(selectedFeature.properties, null, 2)}</pre>
+        //   <button onClick={() => setSelectedFeature(null)}>Close</button>
+        // </div>
+        // <Card className="z-10 flex flex-col m-6 self-start w-full max-w-md backdrop-blur">
+        //   <CardHeader>
+        //     <CardTitle>
+        //       {selectedFeature.properties.block}{" "}
+        //       {selectedFeature.properties.street_name}
+        //     </CardTitle>
+        //     {/* <CardDescription>
+        //       Select and filter data to visualize
+        //     </CardDescription> */}
+        //   </CardHeader>
+        //   <CardContent className="flex flex-col gap-2">
+        //     {/* show postal code, a table of all units and the last 3 transactions of each unit () */}
+        //     <section className="flex gap-2 flex-wrap">
+        //       {loadingFlatTypes
+        //         ? Array.from({ length: 6 }).map((_item, index) => (
+        //             <FilterButtonSkeleton
+        //               key={index}
+        //               length={getRandomIntInclusive(60, 150)}
+        //             />
+        //           ))
+        //         : flatTypes.map((type) => (
+        //             <FilterButton filterCategory={type} key={type} />
+        //           ))}
+        //     </section>
+        //     <Button onClick={() => setSelectedFeature(null)}>Close</Button>
+        //   </CardContent>
+        // </Card>
       )}
     </div>
   );
