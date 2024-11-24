@@ -2,8 +2,8 @@ import apiClient from "./apiClient";
 
 // TODO set URLs here
 const apiService = {
-  getBaseGeosjonPolygons: () => {
-    return apiClient.get("/endpoint1").then((res) => res.data);
+  getBlocks: () => {
+    return apiClient.get("/blocks/").then((res) => res.data);
   },
 
   getFlatTypes: () => {
@@ -13,8 +13,12 @@ const apiService = {
       .then((res) => res.results);
   },
 
-  getLatestAvg: () => {
-    return apiClient.get("/polyons/latest-avg/").then((res) => res.data);
+  getLatestAvgPrice: () => {
+    return apiClient.get("/blocks/?price=latest-avg/").then((res) => res.data);
+  },
+
+  getMrtStations: () => {
+    return apiClient.get("/mrt-stations/").then((res) => res.data);
   },
 
   postEndpoint2: (data: object) => {
