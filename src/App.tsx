@@ -1,5 +1,5 @@
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import {
   Card,
@@ -67,54 +67,67 @@ function App() {
   }, [geojsonData.features.length]);
 
   // Fetch geojson data stream
-  const fetchData = async () => {
-    const response = await apiService.getLatestAvg(); // Your Django API endpoint
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder("utf-8");
+  const fetchStreamGeojsonData = useCallback(
+    async (endpoint: Function, callbackPerLine: Function) => {
+      const response = await endpoint(); // Your Django API endpoint
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
 
-    if (!reader) return;
+      if (!reader) return;
 
-    let done = false;
-    let bufferedData = "";
+      let done = false;
+      let bufferedData = "";
 
-    while (!done) {
-      const { done: streamDone, value } = await reader.read();
-      done = streamDone;
-      bufferedData += decoder.decode(value, { stream: !done });
+      while (!done) {
+        const { done: streamDone, value } = await reader.read();
+        done = streamDone;
+        bufferedData += decoder.decode(value, { stream: !done });
 
-      // Split on newline to handle NDJSON format
-      const lines = bufferedData.split("\n");
-      // Keep the last line as a buffer in case it's incomplete
-      bufferedData = lines.pop() || "";
+        // Split on newline to handle NDJSON format
+        const lines = bufferedData.split("\n");
+        // Keep the last line as a buffer in case it's incomplete
+        bufferedData = lines.pop() || "";
 
-      for (const line of lines) {
-        if (line.trim()) {
-          // Ensure non-empty line
-          try {
-            const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
-            console.log("geoJsonBatch", geoJsonBatch);
-            setGeojsonData((prevData) => ({
-              ...prevData,
-              features: [
-                ...prevData.features,
-                {
-                  ...geoJsonBatch,
-                  properties: {
-                    ...geoJsonBatch.properties,
-                    latest_price: parseInt(
-                      geoJsonBatch.properties.latest_price
-                    ),
-                  },
-                },
-              ],
-            }));
-          } catch (parseError) {
-            console.error("Failed to parse GeoJSON batch:", parseError, line);
+        for (const line of lines) {
+          if (line.trim()) {
+            // Ensure non-empty line
+            try {
+              callbackPerLine(line);
+            } catch (parseError) {
+              console.error("Failed to parse GeoJSON batch:", parseError, line);
+            }
           }
         }
       }
-    }
-  };
+    },
+    []
+  );
+
+  const getLatestPrices = useCallback(() => {
+    fetchStreamGeojsonData(
+      apiService.getLatestAvgPrice,
+      (line: string /* propertiesToOverride: string[] */) => {
+        const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
+        console.log("geoJsonBatch", geoJsonBatch);
+        setGeojsonData((prevData) => ({
+          ...prevData,
+          features: [
+            ...prevData.features,
+            {
+              ...geoJsonBatch,
+              properties: {
+                ...geoJsonBatch.properties,
+                // TODO find out how to input other properties
+                //  propertiesToOverride.map((property:string)=> property: parseInt(geoJsonBatch.properties[property]),
+                // ),
+                latest_price: parseInt(geoJsonBatch.properties.latest_price),
+              },
+            },
+          ],
+        }));
+      }
+    );
+  }, []);
 
   //get flat types
   useEffect(() => {
@@ -137,15 +150,20 @@ function App() {
 
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
-    const getBaseGeojsonPolygons = async () => {
-      try {
-        const getBaseGeojsonData = await apiService.getBaseGeosjonPolygons();
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    // getBaseGeojsonPolygons();
+    fetchStreamGeojsonData(apiService.getBlocks, (line: string) => {
+      const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
+      console.log("geoJsonBatch", geoJsonBatch);
+      setGeojsonData((prevData) => ({
+        ...prevData,
+        features: [
+          ...prevData.features,
+          {
+            ...geoJsonBatch,
+            properties: { ...geoJsonBatch.properties },
+          },
+        ],
+      }));
+    });
   }, []);
 
   useEffect(() => {
@@ -247,7 +265,7 @@ function App() {
               </AccordionItem>
             </Accordion>
 
-            <Button onClick={() => fetchData()}>Filter</Button>
+            <Button onClick={() => getLatestPrices()}>Filter</Button>
           </CardContent>
         </Card>
 
