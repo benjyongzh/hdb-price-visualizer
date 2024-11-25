@@ -134,10 +134,13 @@ function App() {
     const getFlatTypes = async () => {
       setLoadingFlatTypes(true);
       try {
-        await apiService.getFlatTypes().then((res) => {
-          setFlatTypes(res); // Update map with new data
-          setLoadingFlatTypes(false);
-        });
+        await apiService
+          .getFlatTypes()
+          .then((res) => res.data)
+          .then((data) => {
+            setFlatTypes(data); // Update map with new data
+            setLoadingFlatTypes(false);
+          });
       } catch (error) {
         console.log("Error getting Flat Types:", error);
         setFlatTypes("Error getting flat Types"); // Update map with new data
