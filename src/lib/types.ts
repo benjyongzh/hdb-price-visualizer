@@ -12,3 +12,16 @@ export interface GeoJsonData {
   type: "FeatureCollection";
   features: GeoJsonFeature[];
 }
+
+interface Line {
+  name: string;
+  abbbreviation: string;
+  color: string;
+  rail_type: "MRT" | "LRT";
+}
+
+export interface MrtStation {
+  name: string;
+  building_polygon: GeoJsonFeature;
+  lines: Line[];
+}

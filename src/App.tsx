@@ -27,7 +27,7 @@ import {
 import Map from "./components/Map";
 import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { getRandomIntInclusive, formatMoneyString } from "./lib/utils";
-import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
+import { GeoJsonFeature, GeoJsonData, MrtStation } from "@/lib/types";
 import apiService from "./services/apiService";
 
 const sliderDefaultvalue: number = 400000;
@@ -43,6 +43,7 @@ const initialGeoJsonData: GeoJsonData = {
 function App() {
   const [geojsonData, setGeojsonData] =
     useState<GeoJsonData>(initialGeoJsonData);
+  const [mrtStations, setMrtStations] = useState<MrtStation[] | null>(null);
   const [flatTypes, setFlatTypes] = useState<Array<string> | string>([]);
   const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
   const [sliderValue, setSliderValue] = useState<number>(sliderDefaultvalue);
@@ -103,12 +104,25 @@ function App() {
     []
   );
 
+  const fetchMrtStations = useCallback(async () => {
+    try {
+      await apiService
+        .getMrtStations()
+        .then((res) => res.data)
+        .then((data) => setMrtStations(data));
+      // TODO find out how to display mrt stations
+    } catch (err) {
+      console.log("Error getting Mrt Stations:", err);
+    }
+  }, []);
+
   const getLatestPrices = useCallback(() => {
     fetchStreamGeojsonData(
       apiService.getLatestAvgPrice,
       (line: string /* propertiesToOverride: string[] */) => {
         const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
         console.log("geoJsonBatch", geoJsonBatch);
+        // TODO find out how to add onto existing geojsons
         setGeojsonData((prevData) => ({
           ...prevData,
           features: [
@@ -167,6 +181,7 @@ function App() {
         ],
       }));
     });
+    fetchMrtStations();
   }, []);
 
   useEffect(() => {
