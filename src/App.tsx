@@ -143,26 +143,21 @@ function App() {
     );
   }, []);
 
-  //get flat types
-  useEffect(() => {
-    const getFlatTypes = async () => {
-      setLoadingFlatTypes(true);
-      try {
-        await apiService
-          .getFlatTypes()
-          .then((res) => res.data)
-          .then((data) => {
-            setFlatTypes(data); // Update map with new data
-            setLoadingFlatTypes(false);
-          });
-      } catch (error) {
-        console.log("Error getting Flat Types:", error);
-        setFlatTypes("Error getting flat Types"); // Update map with new data
-        setLoadingFlatTypes(false);
-      }
-    };
-
-    getFlatTypes();
+  const getFlatTypes = useCallback(async () => {
+    setLoadingFlatTypes(true);
+    try {
+      await apiService
+        .getFlatTypes()
+        .then((res) => res.data)
+        .then((data) => {
+          setFlatTypes(data); // Update map with new data
+          setLoadingFlatTypes(false);
+        });
+    } catch (error) {
+      console.log("Error getting Flat Types:", error);
+      setFlatTypes("Error getting flat Types"); // Update map with new data
+      setLoadingFlatTypes(false);
+    }
   }, []);
 
   // get all geojsondata without any properties yet. to show all the flats first
@@ -182,6 +177,7 @@ function App() {
       }));
     });
     fetchMrtStations();
+    getFlatTypes();
   }, []);
 
   useEffect(() => {
