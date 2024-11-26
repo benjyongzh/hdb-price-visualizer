@@ -1,10 +1,12 @@
+interface GeoJsonGeometry {
+  type: "Polygon";
+  coordinates: any;
+}
+
 export interface GeoJsonFeature {
   id: number;
   type: "Feature";
-  geometry: {
-    type: "Polygon";
-    coordinates: any;
-  };
+  geometry: GeoJsonGeometry;
   properties: { [key: string]: any };
 }
 
@@ -14,6 +16,7 @@ export interface GeoJsonData {
 }
 
 interface Line {
+  id: number;
   name: string;
   abbbreviation: string;
   color: string;
@@ -22,6 +25,6 @@ interface Line {
 
 export interface MrtStation {
   name: string;
-  building_polygon: GeoJsonFeature;
+  building_polygon: GeoJsonGeometry;
   lines: Line[];
 }

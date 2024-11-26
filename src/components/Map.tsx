@@ -14,7 +14,7 @@ import Map, {
   LayerProps,
   MapLayerMouseEvent,
 } from "react-map-gl";
-import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
+import { GeoJsonFeature, GeoJsonData, MrtStation } from "@/lib/types";
 
 const position: [number, number] = [1.36025, 103.818758];
 
@@ -31,7 +31,8 @@ const initialViewPortState: ViewState = {
 };
 
 const MapComponent = (props: {
-  geojsonData: GeoJsonData;
+  hdbData: GeoJsonData;
+  mrtStations: MrtStation[] | null;
   minPrice: number;
   maxPrice: number;
 }) => {
@@ -42,9 +43,9 @@ const MapComponent = (props: {
   );
 
   // Define Layer styles with an interpolated color expression
-  const lineLayerStyle: LayerProps = useMemo(() => {
+  const hdbLineLayerStyle: LayerProps = useMemo(() => {
     return {
-      id: "geojson-line-layer",
+      id: "hdb-line-layer",
       type: "line",
       paint: {
         "line-color": [
@@ -61,9 +62,9 @@ const MapComponent = (props: {
     };
   }, [props.minPrice, props.maxPrice]);
 
-  const geoJsonLayerStyle: LayerProps = useMemo(() => {
+  const hdbLayerStyle: LayerProps = useMemo(() => {
     return {
-      id: "geojson-layer",
+      id: "hdb-layer",
       type: "fill",
       paint: {
         // Color interpolation based on the "price" property of each feature
@@ -71,6 +72,26 @@ const MapComponent = (props: {
           "interpolate",
           ["linear"],
           ["get", "latest_price"], // The property to base the color on
+          props.minPrice,
+          minPriceColour, // Lowest price -> Red
+          props.maxPrice,
+          maxPriceColour, // Highest price -> Blue
+        ],
+        "fill-opacity": 0.8,
+      },
+    };
+  }, [props.minPrice, props.maxPrice]);
+
+  const mrtLayerStyle: LayerProps = useMemo(() => {
+    return {
+      id: "mrt-layer",
+      type: "fill",
+      paint: {
+        // Color interpolation based on the "price" property of each feature
+        "fill-color": [
+          "interpolate",
+          ["linear"],
+          ["get", "lines"], // The property to base the color on
           props.minPrice,
           minPriceColour, // Lowest price -> Red
           props.maxPrice,
@@ -99,11 +120,15 @@ const MapComponent = (props: {
         mapboxAccessToken={import.meta.env.VITE_MAPBOX_TOKEN}
         onClick={onMapClick}
         style={{ width: "100%", height: "100%" }}
-        interactiveLayerIds={["geojson-layer"]}
+        interactiveLayerIds={["hdb-layer", "mrt-layer"]}
       >
-        <Source id="my-data" type="geojson" data={props.geojsonData}>
-          <Layer {...geoJsonLayerStyle} />
-          <Layer {...lineLayerStyle} />
+        <Source id="hdb-data" type="geojson" data={props.hdbData}>
+          <Layer {...hdbLayerStyle} />
+          <Layer {...hdbLineLayerStyle} />
+        </Source>
+
+        <Source id="mrt-data" type="geojson" data={props.mrtStations}>
+          <Layer {...mrtLayerStyle} />
         </Source>
       </Map>
 

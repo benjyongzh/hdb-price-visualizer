@@ -35,14 +35,13 @@ const sliderMinValue: number = 50000;
 const sliderMaxValue: number = 2000000;
 const debounceDelay = 300; // debounce delay in milliseconds
 
-const initialGeoJsonData: GeoJsonData = {
+const initialHdbData: GeoJsonData = {
   type: "FeatureCollection",
   features: [],
 };
 
 function App() {
-  const [geojsonData, setGeojsonData] =
-    useState<GeoJsonData>(initialGeoJsonData);
+  const [hdbData, setHdbData] = useState<GeoJsonData>(initialHdbData);
   const [mrtStations, setMrtStations] = useState<MrtStation[] | null>(null);
   const [flatTypes, setFlatTypes] = useState<Array<string> | string>([]);
   const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
@@ -58,14 +57,14 @@ function App() {
     minPrice: number;
     maxPrice: number;
   } = useMemo(() => {
-    const pricesArray: number[] = geojsonData.features.map(
+    const pricesArray: number[] = hdbData.features.map(
       (feature) => feature.properties.latest_price
     );
     return {
       minPrice: Math.min(...pricesArray),
       maxPrice: Math.max(...pricesArray),
     };
-  }, [geojsonData.features.length]);
+  }, [hdbData.features.length]);
 
   // Fetch geojson data stream
   const fetchStreamGeojsonData = useCallback(
@@ -123,7 +122,7 @@ function App() {
         const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
         console.log("geoJsonBatch", geoJsonBatch);
         // TODO find out how to add onto existing geojsons
-        setGeojsonData((prevData) => ({
+        setHdbData((prevData) => ({
           ...prevData,
           features: [
             ...prevData.features,
@@ -165,7 +164,7 @@ function App() {
     fetchStreamGeojsonData(apiService.getBlocks, (line: string) => {
       const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
       console.log("geoJsonBatch", geoJsonBatch);
-      setGeojsonData((prevData) => ({
+      setHdbData((prevData) => ({
         ...prevData,
         features: [
           ...prevData.features,
@@ -285,7 +284,8 @@ function App() {
 
         <div className="absolute w-full h-full">
           <Map
-            geojsonData={geojsonData}
+            hdbData={hdbData}
+            mrtStations={mrtStations}
             minPrice={minPrice}
             maxPrice={maxPrice}
           />
