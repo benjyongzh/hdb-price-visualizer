@@ -22,9 +22,3 @@ interface Line {
   color: string;
   rail_type: "MRT" | "LRT";
 }
-
-export interface MrtStation {
-  name: string;
-  building_polygon: GeoJsonGeometry;
-  lines: Line[];
-}

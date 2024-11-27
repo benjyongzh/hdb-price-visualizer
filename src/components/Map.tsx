@@ -14,7 +14,7 @@ import Map, {
   LayerProps,
   MapLayerMouseEvent,
 } from "react-map-gl";
-import { GeoJsonFeature, GeoJsonData, MrtStation } from "@/lib/types";
+import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 
 const position: [number, number] = [1.36025, 103.818758];
 
@@ -32,7 +32,7 @@ const initialViewPortState: ViewState = {
 
 const MapComponent = (props: {
   hdbData: GeoJsonData;
-  mrtStations: MrtStation[] | null;
+  mrtStations: GeoJsonData;
   minPrice: number;
   maxPrice: number;
 }) => {
@@ -92,6 +92,7 @@ const MapComponent = (props: {
           "interpolate",
           ["linear"],
           ["get", "lines"], // The property to base the color on
+          // TODO find out how to get each line from lines
           props.minPrice,
           minPriceColour, // Lowest price -> Red
           props.maxPrice,

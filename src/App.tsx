@@ -27,7 +27,7 @@ import {
 import Map from "./components/Map";
 import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { getRandomIntInclusive, formatMoneyString } from "./lib/utils";
-import { GeoJsonFeature, GeoJsonData, MrtStation } from "@/lib/types";
+import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 import apiService from "./services/apiService";
 
 const sliderDefaultvalue: number = 400000;
@@ -35,14 +35,18 @@ const sliderMinValue: number = 50000;
 const sliderMaxValue: number = 2000000;
 const debounceDelay = 300; // debounce delay in milliseconds
 
-const initialHdbData: GeoJsonData = {
+const initialGeojsonData: GeoJsonData = {
   type: "FeatureCollection",
   features: [],
 };
 
 function App() {
-  const [hdbData, setHdbData] = useState<GeoJsonData>(initialHdbData);
-  const [mrtStations, setMrtStations] = useState<MrtStation[] | null>(null);
+  const [hdbData, setHdbData] = useState<GeoJsonData>({
+    ...initialGeojsonData,
+  });
+  const [mrtStations, setMrtStations] = useState<GeoJsonData>({
+    ...initialGeojsonData,
+  });
   const [flatTypes, setFlatTypes] = useState<Array<string> | string>([]);
   const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
   const [sliderValue, setSliderValue] = useState<number>(sliderDefaultvalue);
@@ -108,8 +112,12 @@ function App() {
       await apiService
         .getMrtStations()
         .then((res) => res.data)
-        .then((data) => setMrtStations(data));
-      // TODO find out how to display mrt stations
+        .then((data) =>
+          setMrtStations({
+            ...initialGeojsonData,
+            features: [...data],
+          })
+        );
     } catch (err) {
       console.log("Error getting Mrt Stations:", err);
     }
