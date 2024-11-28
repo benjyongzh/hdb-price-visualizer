@@ -87,17 +87,8 @@ const MapComponent = (props: {
       id: "mrt-layer",
       type: "fill",
       paint: {
-        // Color interpolation based on the "price" property of each feature
-        "fill-color": [
-          "interpolate",
-          ["linear"],
-          ["get", "lines"], // The property to base the color on
-          // TODO find out how to get each line from lines
-          props.minPrice,
-          minPriceColour, // Lowest price -> Red
-          props.maxPrice,
-          maxPriceColour, // Highest price -> Blue
-        ],
+        // TODO find out how to get each line from lines
+        "fill-color": ["get", "color"], // Access the calculated color
         "fill-opacity": 0.6,
       },
     };

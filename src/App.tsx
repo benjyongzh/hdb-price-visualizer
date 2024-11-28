@@ -113,6 +113,17 @@ function App() {
         .getMrtStations()
         .then((res) => res.data)
         .then((data) =>
+          data.map((feature: GeoJsonFeature) => {
+            return {
+              ...feature,
+              properties: {
+                ...feature.properties,
+                color: `#${feature.properties.lines[0]?.color}` || "#555555",
+              },
+            };
+          })
+        )
+        .then((data) =>
           setMrtStations({
             ...initialGeojsonData,
             features: [...data],
