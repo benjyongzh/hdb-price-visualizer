@@ -111,7 +111,7 @@ function App() {
     try {
       await apiService
         .getMrtStations()
-        .then((res) => res.data)
+        .then((res) => res.results)
         .then((data) =>
           data.map((feature: GeoJsonFeature) => {
             return {

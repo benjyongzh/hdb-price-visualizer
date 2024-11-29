@@ -92,7 +92,7 @@ const MapComponent = (props: {
         "fill-opacity": 0.6,
       },
     };
-  }, [props.minPrice, props.maxPrice]);
+  }, []);
 
   // Handle feature click event
   const onMapClick = (event: MapLayerMouseEvent) => {
