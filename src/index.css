@@ -85,6 +85,16 @@ body {
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
   }
+
+  .AccordionContent {
+    overflow: hidden;
+  }
+  .AccordionContent[data-state="open"] {
+    animation: slideDown 300ms ease-out;
+  }
+  .AccordionContent[data-state="closed"] {
+    animation: slideUp 300ms ease-out;
+  }
 }
 
 @layer base {

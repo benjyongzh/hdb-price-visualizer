@@ -29,7 +29,6 @@ import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { getRandomIntInclusive, formatMoneyString } from "./lib/utils";
 import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 import apiService from "./services/apiService";
-import { AxiosResponse } from "axios";
 
 const sliderDefaultvalue: number = 400000;
 const sliderMinValue: number = 50000;
@@ -220,7 +219,7 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <div className="App">
-        <Card className="z-10 flex flex-col m-6 self-start w-full max-w-md backdrop-blur">
+        <Card className="z-10 flex flex-col m-6 self-start w-full max-w-sm backdrop-blur">
           <CardHeader>
             <CardTitle>HDB Resale Price Data</CardTitle>
             <CardDescription>
@@ -278,7 +277,7 @@ function App() {
               value={filterIsOpen ? "filter-section" : undefined}
             >
               <AccordionItem value="filter-section">
-                <AccordionContent>
+                <AccordionContent className="AccordionContent">
                   <Separator className="mb-4" />
                   <section className="flex flex-col gap-2 justify-start">
                     <h2>Filters</h2>
