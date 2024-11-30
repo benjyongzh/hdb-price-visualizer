@@ -29,6 +29,7 @@ import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { getRandomIntInclusive, formatMoneyString } from "./lib/utils";
 import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 import apiService from "./services/apiService";
+import { AxiosResponse } from "axios";
 
 const sliderDefaultvalue: number = 400000;
 const sliderMinValue: number = 50000;
@@ -62,18 +63,18 @@ function App() {
     maxPrice: number;
   } = useMemo(() => {
     const pricesArray: number[] = hdbData.features.map(
-      (feature) => feature.properties.latest_price
+      (feature) => feature.properties.price | 0
     );
     return {
       minPrice: Math.min(...pricesArray),
-      maxPrice: Math.max(...pricesArray),
+      maxPrice: Math.max(...pricesArray) | 1,
     };
   }, [hdbData.features.length]);
 
   // Fetch geojson data stream
   const fetchStreamGeojsonData = useCallback(
     async (endpoint: Function, callbackPerLine: Function) => {
-      const response = await endpoint(); // Your Django API endpoint
+      const response = await endpoint().then((res: AxiosResponse) => res.data); // Your Django API endpoint
       const reader = response.body?.getReader();
       const decoder = new TextDecoder("utf-8");
 
@@ -111,7 +112,7 @@ function App() {
     try {
       await apiService
         .getMrtStations()
-        .then((res) => res.results)
+        .then((res) => res.data.results)
         .then((data) =>
           data.map((feature: GeoJsonFeature) => {
             return {
@@ -166,7 +167,7 @@ function App() {
     try {
       await apiService
         .getFlatTypes()
-        .then((res) => res.data)
+        .then((res) => res.data.results.data)
         .then((data) => {
           setFlatTypes(data); // Update map with new data
           setLoadingFlatTypes(false);
