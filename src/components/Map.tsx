@@ -18,6 +18,7 @@ import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 
 const position: [number, number] = [1.36025, 103.818758];
 
+const noPriceColour: string = "hsl(179, 10%, 85%)";
 const minPriceColour: string = "hsl(119, 100%, 56%)";
 const maxPriceColour: string = "hsl(0, 100%, 56%)";
 
@@ -49,13 +50,20 @@ const MapComponent = (props: {
       type: "line",
       paint: {
         "line-color": [
-          "interpolate",
-          ["linear"],
-          ["get", "latest_price"], // The property to base the color on
-          props.minPrice,
-          minPriceColour, // Lowest price -> Red
-          props.maxPrice,
-          maxPriceColour, // Highest price -> Blue
+          "case",
+          // Check if 'price' is undefined or 0
+          ["==", ["coalesce", ["get", "price"], 0], 0],
+          noPriceColour,
+          // Interpolate from blue (low price) to red (high price)
+          [
+            "interpolate",
+            ["linear"],
+            ["get", "price"], // The property to base the color on
+            props.minPrice,
+            minPriceColour, // Lowest price -> Red
+            props.maxPrice,
+            maxPriceColour, // Highest price -> Blue
+          ],
         ],
         "line-width": 2,
       },
@@ -69,13 +77,20 @@ const MapComponent = (props: {
       paint: {
         // Color interpolation based on the "price" property of each feature
         "fill-color": [
-          "interpolate",
-          ["linear"],
-          ["get", "latest_price"], // The property to base the color on
-          props.minPrice,
-          minPriceColour, // Lowest price -> Red
-          props.maxPrice,
-          maxPriceColour, // Highest price -> Blue
+          "case",
+          // Check if 'price' is undefined or 0
+          ["==", ["coalesce", ["get", "price"], 0], 0],
+          "#000000",
+          // Interpolate from blue (low price) to red (high price)
+          [
+            "interpolate",
+            ["linear"],
+            ["get", "price"], // The property to base the color on
+            props.minPrice,
+            minPriceColour, // Lowest price -> Red
+            props.maxPrice,
+            maxPriceColour, // Highest price -> Blue
+          ],
         ],
         "fill-opacity": 0.8,
       },
