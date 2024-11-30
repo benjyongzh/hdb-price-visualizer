@@ -167,9 +167,9 @@ function App() {
     try {
       await apiService
         .getFlatTypes()
-        .then((res) => res.data.results.data)
-        .then((data) => {
-          setFlatTypes(data); // Update map with new data
+        .then((res) => res.data.results)
+        .then((results) => {
+          setFlatTypes(results); // Update map with new data
           setLoadingFlatTypes(false);
         });
     } catch (error) {
