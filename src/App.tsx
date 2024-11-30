@@ -62,19 +62,19 @@ function App() {
     minPrice: number;
     maxPrice: number;
   } = useMemo(() => {
-    const pricesArray: number[] = hdbData.features.map(
-      (feature) => feature.properties.price | 0
+    const pricesArray: number[] = hdbData.features.map((feature) =>
+      feature.properties.price ? feature.properties.price : 0
     );
     return {
       minPrice: Math.min(...pricesArray),
-      maxPrice: Math.max(...pricesArray) | 1,
+      maxPrice: Math.max(...pricesArray) > 0 ? Math.max(...pricesArray) : 1,
     };
   }, [hdbData.features.length]);
 
   // Fetch geojson data stream
   const fetchStreamGeojsonData = useCallback(
     async (endpoint: Function, callbackPerLine: Function) => {
-      const response = await endpoint().then((res: AxiosResponse) => res.data); // Your Django API endpoint
+      const response = await endpoint(); // Your Django API endpoint
       const reader = response.body?.getReader();
       const decoder = new TextDecoder("utf-8");
 
@@ -119,7 +119,11 @@ function App() {
               ...feature,
               properties: {
                 ...feature.properties,
-                color: `#${feature.properties.lines[0]?.color}` || "#555555",
+                color:
+                  feature.properties.lines[0] &&
+                  feature.properties.lines[0].color
+                    ? `#${feature.properties.lines[0].color}`
+                    : "#555555",
               },
             };
           })
@@ -136,30 +140,30 @@ function App() {
   }, []);
 
   const getLatestPrices = useCallback(() => {
-    fetchStreamGeojsonData(
-      apiService.getLatestAvgPrice,
-      (line: string /* propertiesToOverride: string[] */) => {
-        const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
-        console.log("geoJsonBatch", geoJsonBatch);
-        // TODO find out how to add onto existing geojsons
-        setHdbData((prevData) => ({
-          ...prevData,
-          features: [
-            ...prevData.features,
-            {
-              ...geoJsonBatch,
-              properties: {
-                ...geoJsonBatch.properties,
-                // TODO find out how to input other properties
-                //  propertiesToOverride.map((property:string)=> property: parseInt(geoJsonBatch.properties[property]),
-                // ),
-                latest_price: parseInt(geoJsonBatch.properties.latest_price),
-              },
-            },
-          ],
-        }));
-      }
-    );
+    // fetchStreamGeojsonData(
+    //   apiService.getLatestAvgPrice,
+    //   (line: string /* propertiesToOverride: string[] */) => {
+    //     const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
+    //     console.log("geoJsonBatch", geoJsonBatch);
+    //     // TODO find out how to add onto existing geojsons
+    //     setHdbData((prevData) => ({
+    //       ...prevData,
+    //       features: [
+    //         ...prevData.features,
+    //         {
+    //           ...geoJsonBatch,
+    //           properties: {
+    //             ...geoJsonBatch.properties,
+    //             // TODO find out how to input other properties
+    //             //  propertiesToOverride.map((property:string)=> property: parseInt(geoJsonBatch.properties[property]),
+    //             // ),
+    //             latest_price: parseInt(geoJsonBatch.properties.latest_price),
+    //           },
+    //         },
+    //       ],
+    //     }));
+    //   }
+    // );
   }, []);
 
   const getFlatTypes = useCallback(async () => {
@@ -183,7 +187,6 @@ function App() {
   useEffect(() => {
     fetchStreamGeojsonData(apiService.getBlocks, (line: string) => {
       const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
-      console.log("geoJsonBatch", geoJsonBatch);
       setHdbData((prevData) => ({
         ...prevData,
         features: [
