@@ -18,9 +18,9 @@ import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 
 const position: [number, number] = [1.36025, 103.818758];
 
-const noPriceColour: string = "hsl(179, 10%, 85%)";
-const minPriceColour: string = "hsl(119, 100%, 56%)";
-const maxPriceColour: string = "hsl(0, 100%, 56%)";
+const noPriceColour: string = "hsl(217, 0%, 35%)";
+const minPriceColour: string = "hsl(119, 100%, 56%)"; //#4ecdc4
+const maxPriceColour: string = "hsl(0, 100%, 56%)"; //#ff6b6b
 
 const initialViewPortState: ViewState = {
   latitude: position[0],
@@ -80,7 +80,7 @@ const MapComponent = (props: {
           "case",
           // Check if 'price' is undefined or 0
           ["==", ["coalesce", ["get", "price"], 0], 0],
-          "#000000",
+          noPriceColour,
           // Interpolate from blue (low price) to red (high price)
           [
             "interpolate",
