@@ -3,11 +3,10 @@ import apiClient from "./apiClient";
 // TODO set URLs here
 const apiService = {
   getBlocks: () => {
-    return fetch(import.meta.env.VITE_API_URL + "/blocks/", {
+    return fetch(import.meta.env.VITE_API_URL + "/blocks/?geometry=true/", {
       headers: { Accept: "application/json" },
       mode: "cors", // If cross-origin
     });
-    // return apiClient.get("/blocks/", {responseType: "stream"}).then((res) => res.data);
   },
 
   getLatestAvgPrice: () => {
@@ -15,7 +14,6 @@ const apiService = {
       headers: { Accept: "application/json" },
       mode: "cors", // If cross-origin
     });
-    // return apiClient.get("/blocks/?price=latest-avg/");
   },
 
   getFlatTypes: () => {
