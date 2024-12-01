@@ -1,6 +1,5 @@
 import apiClient from "./apiClient";
 
-// TODO set URLs here
 const apiService = {
   getBlocks: () => {
     return fetch(import.meta.env.VITE_API_URL + "/blocks/?geometry=true/", {

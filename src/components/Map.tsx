@@ -102,7 +102,6 @@ const MapComponent = (props: {
       id: "mrt-layer",
       type: "fill",
       paint: {
-        // TODO find out how to get each line from lines
         "fill-color": ["get", "color"], // Access the calculated color
         "fill-opacity": 0.6,
       },
