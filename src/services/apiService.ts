@@ -2,14 +2,14 @@ import apiClient from "./apiClient";
 
 const apiService = {
   getBlocks: () => {
-    return fetch(import.meta.env.VITE_API_URL + "/blocks/?geometry=true/", {
+    return fetch(import.meta.env.VITE_API_URL + "/blocks/?geometry=true", {
       headers: { Accept: "application/json" },
       mode: "cors", // If cross-origin
     });
   },
 
   getLatestAvgPrice: () => {
-    return fetch(import.meta.env.VITE_API_URL + "/blocks/?price=latest-avg/", {
+    return fetch(import.meta.env.VITE_API_URL + "/blocks/?price=latest-avg", {
       headers: { Accept: "application/json" },
       mode: "cors", // If cross-origin
     });
