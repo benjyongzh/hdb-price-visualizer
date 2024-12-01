@@ -231,7 +231,7 @@ function App() {
                   <div className="flex items-center gap-2">
                     Budget
                     <Popover>
-                      <PopoverTrigger>
+                      <PopoverTrigger asChild>
                         <Button size="icon" variant="ghost" className="w-7 h-7">
                           <CircleHelp color="hsl(217, 0%, 90%)" size={16} />
                         </Button>
