@@ -139,30 +139,25 @@ function App() {
   }, []);
 
   const getLatestPrices = useCallback(() => {
-    // fetchStreamGeojsonData(
-    //   apiService.getLatestAvgPrice,
-    //   (line: string /* propertiesToOverride: string[] */) => {
-    //     const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
-    //     console.log("geoJsonBatch", geoJsonBatch);
-    //     // TODO find out how to add onto existing geojsons
-    //     setHdbData((prevData) => ({
-    //       ...prevData,
-    //       features: [
-    //         ...prevData.features,
-    //         {
-    //           ...geoJsonBatch,
-    //           properties: {
-    //             ...geoJsonBatch.properties,
-    //             // TODO find out how to input other properties
-    //             //  propertiesToOverride.map((property:string)=> property: parseInt(geoJsonBatch.properties[property]),
-    //             // ),
-    //             latest_price: parseInt(geoJsonBatch.properties.latest_price),
-    //           },
-    //         },
-    //       ],
-    //     }));
-    //   }
-    // );
+    fetchStreamGeojsonData(apiService.getLatestAvgPrice, (line: string) => {
+      const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
+      console.log("geoJsonBatch", geoJsonBatch);
+      // TODO find out how to add onto existing geojsons. maybe backend should only give price info along with postalcode? then faster for FE to absorb, and easier to override
+      setHdbData((prevData) => ({
+        ...prevData,
+        features: prevData.features.map((item) =>
+          item.id === geoJsonBatch.id
+            ? {
+                ...item,
+                properties: {
+                  ...item.properties,
+                  price: geoJsonBatch.properties.price,
+                },
+              }
+            : item
+        ),
+      }));
+    });
   }, []);
 
   const getFlatTypes = useCallback(async () => {
