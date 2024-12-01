@@ -142,7 +142,6 @@ function App() {
     fetchStreamGeojsonData(apiService.getLatestAvgPrice, (line: string) => {
       const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
       console.log("geoJsonBatch", geoJsonBatch);
-      // TODO find out how to add onto existing geojsons. maybe backend should only give price info along with postalcode? then faster for FE to absorb, and easier to override
       setHdbData((prevData) => ({
         ...prevData,
         features: prevData.features.map((item) =>
@@ -151,12 +150,13 @@ function App() {
                 ...item,
                 properties: {
                   ...item.properties,
-                  price: geoJsonBatch.properties.price,
+                  price: parseFloat(geoJsonBatch.properties.price),
                 },
               }
             : item
         ),
       }));
+      //TODO compute price colours here
     });
   }, []);
 
