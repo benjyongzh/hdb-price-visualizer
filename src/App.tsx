@@ -57,18 +57,15 @@ function App() {
   // const [status, setStatus] = useState<Boolean>();
 
   // Calculate min and max prices without setting state immediately
-  const computedPrices: {
-    minPrice: number;
-    maxPrice: number;
-  } = useMemo(() => {
+  const computedPrices = useCallback(() => {
     const pricesArray: number[] = hdbData.features.map((feature) =>
       feature.properties.price ? feature.properties.price : 0
     );
-    return {
-      minPrice: Math.min(...pricesArray),
-      maxPrice: Math.max(...pricesArray) > 0 ? Math.max(...pricesArray) : 1,
-    };
-  }, [hdbData.features.length]);
+    setMaxPrice(Math.max(...pricesArray) > 0 ? Math.max(...pricesArray) : 1);
+    setMinPrice(
+      maxPrice === Math.min(...pricesArray) ? 0 : Math.min(...pricesArray)
+    );
+  }, []);
 
   // Fetch geojson data stream
   const fetchStreamGeojsonData = useCallback(
@@ -157,6 +154,7 @@ function App() {
         ),
       }));
       //TODO compute price colours here
+      computedPrices();
     });
   }, []);
 
@@ -196,20 +194,20 @@ function App() {
     getFlatTypes();
   }, []);
 
-  useEffect(() => {
-    // Set a debounce timer to update minPrice and maxPrice
-    const timer = setTimeout(() => {
-      setMaxPrice(computedPrices.maxPrice);
-      setMinPrice(
-        computedPrices.maxPrice === computedPrices.minPrice
-          ? 0
-          : computedPrices.minPrice
-      );
-    }, debounceDelay);
+  // useEffect(() => {
+  //   // Set a debounce timer to update minPrice and maxPrice
+  //   const timer = setTimeout(() => {
+  //     setMaxPrice(computedPrices.maxPrice);
+  //     setMinPrice(
+  //       computedPrices.maxPrice === computedPrices.minPrice
+  //         ? 0
+  //         : computedPrices.minPrice
+  //     );
+  //   }, debounceDelay);
 
-    // Clear timeout if prices change again within the debounce period
-    return () => clearTimeout(timer);
-  }, [computedPrices]);
+  //   // Clear timeout if prices change again within the debounce period
+  //   return () => clearTimeout(timer);
+  // }, [computedPrices]);
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
