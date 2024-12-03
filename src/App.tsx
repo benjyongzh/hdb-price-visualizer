@@ -57,10 +57,7 @@ function App() {
   // const [status, setStatus] = useState<Boolean>();
 
   // Calculate min and max prices without setting state immediately
-  const computedPrices = useCallback(() => {
-    const pricesArray: number[] = hdbData.features.map((feature) =>
-      feature.properties.price ? feature.properties.price : 0
-    );
+  const computePriceLimits = useCallback((pricesArray: number[]) => {
     setMaxPrice(Math.max(...pricesArray) > 0 ? Math.max(...pricesArray) : 1);
     setMinPrice(
       maxPrice === Math.min(...pricesArray) ? 0 : Math.min(...pricesArray)
@@ -136,9 +133,10 @@ function App() {
   }, []);
 
   const getLatestPrices = useCallback(() => {
+    const batchSize: number = 250;
+    const prices: number[] = [];
     fetchStreamGeojsonData(apiService.getLatestAvgPrice, (line: string) => {
       const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
-      console.log("geoJsonBatch", geoJsonBatch);
       setHdbData((prevData) => ({
         ...prevData,
         features: prevData.features.map((item) =>
@@ -154,7 +152,13 @@ function App() {
         ),
       }));
       //TODO compute price colours here
-      computedPrices();
+      prices.push(parseInt(geoJsonBatch.properties.price));
+      if (
+        geoJsonBatch.id % batchSize == 0 ||
+        geoJsonBatch.id >= hdbData.features.length - 1
+      ) {
+        computePriceLimits(prices);
+      }
     });
   }, []);
 
