@@ -14,17 +14,16 @@ import Map, {
   LayerProps,
   MapLayerMouseEvent,
 } from "react-map-gl";
-import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
-
-const position: [number, number] = [1.36025, 103.818758];
-
-const noPriceColour: string = "hsl(217, 0%, 35%)";
-const minPriceColour: string = "hsl(119, 100%, 56%)"; //#4ecdc4
-const maxPriceColour: string = "hsl(0, 100%, 56%)"; //#ff6b6b
+import { GeoJsonFeature, GeoJsonData, PriceColourIndex } from "@/lib/types";
+import {
+  DATA_COLOUR_RANGE,
+  MAP_STARTING_POSITION,
+  DATA_NODATA_COLOUR,
+} from "@/constants";
 
 const initialViewPortState: ViewState = {
-  latitude: position[0],
-  longitude: position[1],
+  latitude: MAP_STARTING_POSITION[0],
+  longitude: MAP_STARTING_POSITION[1],
   zoom: 10,
   bearing: 0,
   pitch: 0,
@@ -43,6 +42,24 @@ const MapComponent = (props: {
     null
   );
 
+  const priceColourStops: PriceColourIndex = useMemo(() => {
+    const stepSize: number =
+      (props.maxPrice - props.minPrice) / (DATA_COLOUR_RANGE.length - 1);
+    const priceColourArray: PriceColourIndex = [];
+    for (let i = 0; i < DATA_COLOUR_RANGE.length; i++) {
+      priceColourArray.push({
+        price: props.minPrice + i * stepSize,
+        colour: DATA_COLOUR_RANGE[i],
+      });
+    }
+    return priceColourArray;
+  }, [props.minPrice, props.maxPrice]);
+
+  const priceColourArray: (number | string)[] = useMemo(
+    () => priceColourStops.map((pair) => [pair.price, pair.colour]).flat(),
+    [priceColourStops]
+  );
+
   // Define Layer styles with an interpolated color expression
   const hdbLineLayerStyle: LayerProps = useMemo(() => {
     return {
@@ -53,16 +70,13 @@ const MapComponent = (props: {
           "case",
           // Check if 'price' is undefined or 0
           ["==", ["coalesce", ["get", "price"], 0], 0],
-          noPriceColour,
+          DATA_NODATA_COLOUR,
           // Interpolate from blue (low price) to red (high price)
           [
             "interpolate",
             ["linear"],
             ["get", "price"], // The property to base the color on
-            props.minPrice,
-            minPriceColour, // Lowest price -> Red
-            props.maxPrice,
-            maxPriceColour, // Highest price -> Blue
+            ...priceColourArray,
           ],
         ],
         "line-width": 2,
@@ -80,19 +94,16 @@ const MapComponent = (props: {
           "case",
           // Check if 'price' is undefined or 0
           ["==", ["coalesce", ["get", "price"], 0], 0],
-          noPriceColour,
+          DATA_NODATA_COLOUR,
           // Interpolate from blue (low price) to red (high price)
           [
             "interpolate",
             ["linear"],
             ["get", "price"], // The property to base the color on
-            props.minPrice,
-            minPriceColour, // Lowest price -> Red
-            props.maxPrice,
-            maxPriceColour, // Highest price -> Blue
+            ...priceColourArray,
           ],
         ],
-        "fill-opacity": 0.8,
+        "fill-opacity": 0.9,
       },
     };
   }, [props.minPrice, props.maxPrice]);

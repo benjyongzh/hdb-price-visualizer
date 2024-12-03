@@ -1,5 +1,5 @@
 import "mapbox-gl/dist/mapbox-gl.css";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ThemeProvider } from "./components/theme-provider";
 import {
   Card,
@@ -29,11 +29,11 @@ import { FilterButton, FilterButtonSkeleton } from "./components/FilterButton";
 import { getRandomIntInclusive, formatMoneyString } from "./lib/utils";
 import { GeoJsonFeature, GeoJsonData } from "@/lib/types";
 import apiService from "./services/apiService";
-
-const sliderDefaultvalue: number = 400000;
-const sliderMinValue: number = 50000;
-const sliderMaxValue: number = 2000000;
-const debounceDelay = 300; // debounce delay in milliseconds
+import {
+  PRICE_SLIDER_DEFAULT_VALUE,
+  PRICE_SLIDER_MIN_VALUE,
+  PRICE_SLIDER_MAX_VALUE,
+} from "./constants";
 
 const initialGeojsonData: GeoJsonData = {
   type: "FeatureCollection",
@@ -49,7 +49,9 @@ function App() {
   });
   const [flatTypes, setFlatTypes] = useState<Array<string> | string>([]);
   const [loadingFlatTypes, setLoadingFlatTypes] = useState<boolean>(false);
-  const [sliderValue, setSliderValue] = useState<number>(sliderDefaultvalue);
+  const [sliderValue, setSliderValue] = useState<number>(
+    PRICE_SLIDER_DEFAULT_VALUE
+  );
   const [filterIsOpen, setFilterIsOpen] = useState<boolean>(false);
 
   const [minPrice, setMinPrice] = useState<number>(0);
@@ -181,6 +183,8 @@ function App() {
 
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
+    setHdbData({ ...initialGeojsonData });
+    // TODO find a way to cache this initial data
     fetchStreamGeojsonData(apiService.getBlocks, (line: string) => {
       const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
       setHdbData((prevData) => ({
@@ -197,21 +201,6 @@ function App() {
     fetchMrtStations();
     getFlatTypes();
   }, []);
-
-  // useEffect(() => {
-  //   // Set a debounce timer to update minPrice and maxPrice
-  //   const timer = setTimeout(() => {
-  //     setMaxPrice(computedPrices.maxPrice);
-  //     setMinPrice(
-  //       computedPrices.maxPrice === computedPrices.minPrice
-  //         ? 0
-  //         : computedPrices.minPrice
-  //     );
-  //   }, debounceDelay);
-
-  //   // Clear timeout if prices change again within the debounce period
-  //   return () => clearTimeout(timer);
-  // }, [computedPrices]);
 
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -249,9 +238,9 @@ function App() {
                   </p>
                 </Label>
                 <Slider
-                  defaultValue={[sliderDefaultvalue]}
-                  min={sliderMinValue}
-                  max={sliderMaxValue}
+                  defaultValue={[PRICE_SLIDER_DEFAULT_VALUE]}
+                  min={PRICE_SLIDER_MIN_VALUE}
+                  max={PRICE_SLIDER_MAX_VALUE}
                   onValueChange={([value]) => setSliderValue(value)}
                   name="budget"
                   step={1000}

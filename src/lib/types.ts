@@ -22,3 +22,5 @@ interface Line {
   color: string;
   rail_type: "MRT" | "LRT";
 }
+
+export type PriceColourIndex = Array<{ price: number; colour: string }>;
