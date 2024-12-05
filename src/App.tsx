@@ -153,7 +153,6 @@ function App() {
             : item
         ),
       }));
-      //TODO compute price colours here
       prices.push(parseInt(geoJsonBatch.properties.price));
       if (
         geoJsonBatch.id % batchSize == 0 ||
@@ -184,7 +183,7 @@ function App() {
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
     setHdbData({ ...initialGeojsonData });
-    // TODO find a way to cache this initial data
+    // TODO find a way to cache this initial data. likely will need django redis to do it
     fetchStreamGeojsonData(apiService.getBlocks, (line: string) => {
       const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
       setHdbData((prevData) => ({

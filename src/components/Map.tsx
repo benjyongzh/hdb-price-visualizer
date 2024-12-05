@@ -114,7 +114,7 @@ const MapComponent = (props: {
       type: "fill",
       paint: {
         "fill-color": ["get", "color"], // Access the calculated color
-        "fill-opacity": 0.6,
+        "fill-opacity": 0.6, //TODO should make mrt stations togglable. show/hide by controlling opacity
       },
     };
   }, []);
@@ -143,7 +143,6 @@ const MapComponent = (props: {
           <Layer {...hdbLayerStyle} />
           <Layer {...hdbLineLayerStyle} />
         </Source>
-
         <Source id="mrt-data" type="geojson" data={props.mrtStations}>
           <Layer {...mrtLayerStyle} />
         </Source>
