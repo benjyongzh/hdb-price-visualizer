@@ -8,16 +8,16 @@ const apiService = {
     });
   },
 
-  getLatestAvgPrice: () => {
-    return apiClient.get("/blocks/price/latest-avg/");
-  },
-
   // getLatestAvgPrice: () => {
-  //   return fetch(import.meta.env.VITE_API_URL + "/blocks/?price=latest-avg", {
-  //     headers: { Accept: "application/json" },
-  //     mode: "cors", // If cross-origin
-  //   });
+  //   return apiClient.get("/blocks/price/latest-avg/");
   // },
+
+  getLatestAvgPrice: () => {
+    return fetch(import.meta.env.VITE_API_URL + "/blocks/price/latest-avg/", {
+      headers: { Accept: "application/json" },
+      mode: "cors", // If cross-origin
+    });
+  },
 
   getFlatTypes: () => {
     return apiClient.get("/flat-types/");
