@@ -213,6 +213,8 @@ function App() {
     getFlatTypes();
   }, []);
 
+  // TODO make card fully minimised in mobile. the whole card is the filter coming from bottom by clicking a button at bottom. in pc the whole filter should be a default part of the ui (no need accordion buttons etc)
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <div className="App">
