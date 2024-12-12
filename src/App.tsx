@@ -84,17 +84,26 @@ function App() {
         bufferedData += decoder.decode(value, { stream: !done });
 
         // Split on newline to handle NDJSON format
-        const lines = bufferedData.split("\n");
+        const batches = bufferedData.split("\n");
         // Keep the last line as a buffer in case it's incomplete
-        bufferedData = lines.pop() || "";
+        bufferedData = batches.pop() || "";
+        // console.log("batches:", batches);
 
-        for (const line of lines) {
-          if (line.trim()) {
+        for (const batch of batches) {
+          if (batch.trim()) {
             // Ensure non-empty line
-            try {
-              callbackPerLine(line);
-            } catch (parseError) {
-              console.error("Failed to parse GeoJSON batch:", parseError, line);
+            const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
+            // console.log("batch:", geoJsonBatch);
+            for (let i = 0; i < geoJsonBatch.length; i++) {
+              try {
+                callbackPerLine(geoJsonBatch[i]);
+              } catch (parseError) {
+                console.error(
+                  "Failed to parse GeoJSON batch:",
+                  parseError,
+                  geoJsonBatch[i]
+                );
+              }
             }
           }
         }
@@ -135,32 +144,34 @@ function App() {
   }, []);
 
   const getLatestPrices = useCallback(() => {
-    const batchSize: number = 250;
+    const batchSize: number = 500;
     const prices: number[] = [];
-    fetchStreamGeojsonData(apiService.getLatestAvgPrice, (line: string) => {
-      const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
-      setHdbData((prevData) => ({
-        ...prevData,
-        features: prevData.features.map((item) =>
-          item.id === geoJsonBatch.id
-            ? {
-                ...item,
-                properties: {
-                  ...item.properties,
-                  price: parseFloat(geoJsonBatch.properties.price),
-                },
-              }
-            : item
-        ),
-      }));
-      prices.push(parseInt(geoJsonBatch.properties.price));
-      if (
-        geoJsonBatch.id % batchSize == 0 ||
-        geoJsonBatch.id >= hdbData.features.length - 1
-      ) {
-        computePriceLimits(prices);
+    fetchStreamGeojsonData(
+      apiService.getLatestAvgPrice,
+      (geoJsonBatch: GeoJsonFeature) => {
+        setHdbData((prevData) => ({
+          ...prevData,
+          features: prevData.features.map((item) =>
+            item.id === geoJsonBatch.id
+              ? {
+                  ...item,
+                  properties: {
+                    ...item.properties,
+                    price: parseFloat(geoJsonBatch.properties.price),
+                  },
+                }
+              : item
+          ),
+        }));
+        prices.push(parseInt(geoJsonBatch.properties.price));
+        if (
+          geoJsonBatch.id % batchSize == 0 ||
+          geoJsonBatch.id >= hdbData.features.length - 1
+        ) {
+          computePriceLimits(prices);
+        }
       }
-    });
+    );
   }, []);
 
   const getFlatTypes = useCallback(async () => {
@@ -183,20 +194,21 @@ function App() {
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
     setHdbData({ ...initialGeojsonData });
-    // TODO find a way to cache this initial data. likely will need django redis to do it
-    fetchStreamGeojsonData(apiService.getBlocks, (line: string) => {
-      const geoJsonBatch = JSON.parse(line) as GeoJsonFeature;
-      setHdbData((prevData) => ({
-        ...prevData,
-        features: [
-          ...prevData.features,
-          {
-            ...geoJsonBatch,
-            properties: { ...geoJsonBatch.properties },
-          },
-        ],
-      }));
-    });
+    fetchStreamGeojsonData(
+      apiService.getBlocks,
+      (geoJsonBatch: GeoJsonFeature) => {
+        setHdbData((prevData) => ({
+          ...prevData,
+          features: [
+            ...prevData.features,
+            {
+              ...geoJsonBatch,
+              properties: { ...geoJsonBatch.properties },
+            },
+          ],
+        }));
+      }
+    );
     fetchMrtStations();
     getFlatTypes();
   }, []);
