@@ -34,11 +34,14 @@ import {
   PRICE_SLIDER_MIN_VALUE,
   PRICE_SLIDER_MAX_VALUE,
 } from "./constants";
+import * as Comlink from "comlink";
 
 const initialGeojsonData: GeoJsonData = {
   type: "FeatureCollection",
   features: [],
 };
+
+import { StreamDataWorkerArgs } from "./workers/dataWorker";
 
 function App() {
   const [hdbData, setHdbData] = useState<GeoJsonData>({
@@ -66,51 +69,72 @@ function App() {
     );
   }, []);
 
-  // Fetch geojson data stream
   const fetchStreamGeojsonData = useCallback(
-    async (endpoint: Function, callbackPerLine: Function) => {
-      const response = await endpoint(); // Your Django API endpoint
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
+    async (
+      endpoint: Function,
+      callbackPerLine: (geoJsonBatch: GeoJsonFeature) => void
+    ) => {
+      // Call the `streamData` method directly on the proxied worker instance
+      console.log("fetchstream triggered");
+      // Wrap the worker with Comlink
+      const streamDataApi = Comlink.wrap<(args: StreamDataWorkerArgs) => void>(
+        new Worker(new URL("./workers/dataWorker.ts", import.meta.url))
+      );
+      console.log("streamDataApi", streamDataApi);
 
-      if (!reader) return;
-
-      let done = false;
-      let bufferedData = "";
-
-      while (!done) {
-        const { done: streamDone, value } = await reader.read();
-        done = streamDone;
-        bufferedData += decoder.decode(value, { stream: !done });
-
-        // Split on newline to handle NDJSON format
-        const batches = bufferedData.split("\n");
-        // Keep the last line as a buffer in case it's incomplete
-        bufferedData = batches.pop() || "";
-        // console.log("batches:", batches);
-
-        for (const batch of batches) {
-          if (batch.trim()) {
-            // Ensure non-empty line
-            const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
-            // console.log("batch:", geoJsonBatch);
-            for (let i = 0; i < geoJsonBatch.length; i++) {
-              try {
-                callbackPerLine(geoJsonBatch[i]);
-              } catch (parseError) {
-                console.error(
-                  "Failed to parse GeoJSON batch:",
-                  parseError,
-                  geoJsonBatch[i]
-                );
-              }
-            }
-          }
-        }
-      }
+      await streamDataApi({
+        endpoint: Comlink.proxy(endpoint),
+        callbackPerLine: Comlink.proxy(callbackPerLine),
+      });
     },
     []
   );
+
+  // Fetch geojson data stream
+  // const fetchStreamGeojsonData = useCallback(
+  //   async (endpoint: Function, callbackPerLine: Function) => {
+  //     const response = await endpoint(); // Your Django API endpoint
+  //     const reader = response.body?.getReader();
+  //     const decoder = new TextDecoder("utf-8");
+
+  //     if (!reader) return;
+
+  //     let done = false;
+  //     let bufferedData = "";
+
+  //     while (!done) {
+  //       const { done: streamDone, value } = await reader.read();
+  //       done = streamDone;
+  //       bufferedData += decoder.decode(value, { stream: !done });
+
+  //       // Split on newline to handle NDJSON format
+  //       const batches = bufferedData.split("\n");
+  //       // Keep the last line as a buffer in case it's incomplete
+  //       bufferedData = batches.pop() || "";
+  //       // console.log("batches:", batches);
+
+  //       for (const batch of batches) {
+  //         if (batch.trim()) {
+  //           // Ensure non-empty line
+  //           const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
+  //           // console.log("batch:", geoJsonBatch);
+  //           for (let i = 0; i < geoJsonBatch.length; i++) {
+  //             try {
+  //               callbackPerLine(geoJsonBatch[i]);
+  //             } catch (parseError) {
+  //               console.error(
+  //                 "Failed to parse GeoJSON batch:",
+  //                 parseError,
+  //                 geoJsonBatch[i]
+  //               );
+  //             }
+  //           }
+  //         }
+  //       }
+  //     }
+  //   },
+  //   []
+  // );
 
   const fetchMrtStations = useCallback(async () => {
     try {
@@ -194,6 +218,8 @@ function App() {
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
     setHdbData({ ...initialGeojsonData });
+    // console.log("dataworker:", dataWorker);
+
     fetchStreamGeojsonData(
       apiService.getBlocks,
       (geoJsonBatch: GeoJsonFeature) => {
@@ -211,6 +237,10 @@ function App() {
     );
     fetchMrtStations();
     getFlatTypes();
+    // return () => {
+    //   console.log("terminating dataworker:", dataWorker);
+    //   dataWorker.terminate();
+    // };
   }, []);
 
   // TODO make card fully minimised in mobile. the whole card is the filter coming from bottom by clicking a button at bottom. in pc the whole filter should be a default part of the ui (no need accordion buttons etc)
