@@ -34,14 +34,14 @@ import {
   PRICE_SLIDER_MIN_VALUE,
   PRICE_SLIDER_MAX_VALUE,
 } from "./constants";
-import * as Comlink from "comlink";
+// import * as Comlink from "comlink";
 
 const initialGeojsonData: GeoJsonData = {
   type: "FeatureCollection",
   features: [],
 };
 
-import { StreamDataWorkerArgs } from "./workers/dataWorker";
+import { StreamWorkerInputArgs, StreamWorkerOutputArgs } from "@/lib/types";
 
 function App() {
   const [hdbData, setHdbData] = useState<GeoJsonData>({
@@ -69,26 +69,26 @@ function App() {
     );
   }, []);
 
-  const fetchStreamGeojsonData = useCallback(
-    async (
-      endpoint: Function,
-      callbackPerLine: (geoJsonBatch: GeoJsonFeature) => void
-    ) => {
-      // Call the `streamData` method directly on the proxied worker instance
-      console.log("fetchstream triggered");
-      // Wrap the worker with Comlink
-      const streamDataApi = Comlink.wrap<(args: StreamDataWorkerArgs) => void>(
-        new Worker(new URL("./workers/dataWorker.ts", import.meta.url))
-      );
-      console.log("streamDataApi", streamDataApi);
+  // const fetchStreamGeojsonData = useCallback(
+  //   async (
+  //     endpoint: Function,
+  //     callbackPerLine: (geoJsonBatch: GeoJsonFeature) => void
+  //   ) => {
+  //     // Call the `streamData` method directly on the proxied worker instance
+  //     console.log("fetchstream triggered");
+  //     // Wrap the worker with Comlink
+  //     const streamDataApi = Comlink.wrap<(args: StreamDataWorkerArgs) => void>(
+  //       new Worker(new URL("./workers/dataWorker.ts", import.meta.url))
+  //     );
+  //     console.log("streamDataApi", streamDataApi);
 
-      await streamDataApi({
-        endpoint: Comlink.proxy(endpoint),
-        callbackPerLine: Comlink.proxy(callbackPerLine),
-      });
-    },
-    []
-  );
+  //     await streamDataApi({
+  //       endpoint: Comlink.proxy(endpoint),
+  //       callbackPerLine: Comlink.proxy(callbackPerLine),
+  //     });
+  //   },
+  //   []
+  // );
 
   // Fetch geojson data stream
   // const fetchStreamGeojsonData = useCallback(
@@ -168,34 +168,34 @@ function App() {
   }, []);
 
   const getLatestPrices = useCallback(() => {
-    const batchSize: number = 500;
-    const prices: number[] = [];
-    fetchStreamGeojsonData(
-      apiService.getLatestAvgPrice,
-      (geoJsonBatch: GeoJsonFeature) => {
-        setHdbData((prevData) => ({
-          ...prevData,
-          features: prevData.features.map((item) =>
-            item.id === geoJsonBatch.id
-              ? {
-                  ...item,
-                  properties: {
-                    ...item.properties,
-                    price: parseFloat(geoJsonBatch.properties.price),
-                  },
-                }
-              : item
-          ),
-        }));
-        prices.push(parseInt(geoJsonBatch.properties.price));
-        if (
-          geoJsonBatch.id % batchSize == 0 ||
-          geoJsonBatch.id >= hdbData.features.length - 1
-        ) {
-          computePriceLimits(prices);
-        }
-      }
-    );
+    // const batchSize: number = 500;
+    // const prices: number[] = [];
+    // fetchStreamGeojsonData(
+    //   apiService.getLatestAvgPrice,
+    //   (geoJsonBatch: GeoJsonFeature) => {
+    //     setHdbData((prevData) => ({
+    //       ...prevData,
+    //       features: prevData.features.map((item) =>
+    //         item.id === geoJsonBatch.id
+    //           ? {
+    //               ...item,
+    //               properties: {
+    //                 ...item.properties,
+    //                 price: parseFloat(geoJsonBatch.properties.price),
+    //               },
+    //             }
+    //           : item
+    //       ),
+    //     }));
+    //     prices.push(parseInt(geoJsonBatch.properties.price));
+    //     if (
+    //       geoJsonBatch.id % batchSize == 0 ||
+    //       geoJsonBatch.id >= hdbData.features.length - 1
+    //     ) {
+    //       computePriceLimits(prices);
+    //     }
+    //   }
+    // );
   }, []);
 
   const getFlatTypes = useCallback(async () => {
@@ -217,30 +217,58 @@ function App() {
 
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
-    setHdbData({ ...initialGeojsonData });
-    // console.log("dataworker:", dataWorker);
+    const streamWorker = new Worker(
+      new URL("./workers/dataWorker.ts", import.meta.url)
+    );
 
-    fetchStreamGeojsonData(
-      apiService.getBlocks,
-      (geoJsonBatch: GeoJsonFeature) => {
+    streamWorker.onmessage = (event) => {
+      const { done, error } = event.data as StreamWorkerOutputArgs;
+
+      if (error) {
+        // setError(error);
+        // setLoading(false);
+        console.log(error.message, error.batch);
+        streamWorker.terminate();
+        return;
+      }
+
+      if (done) {
+        // setLoading(false);
+        streamWorker.terminate();
+      }
+    };
+
+    streamWorker.onerror = (err) => {
+      // setError(err.message);
+      // setLoading(false);
+      console.log(err);
+      streamWorker.terminate();
+    };
+
+    // setLoading(true);
+    streamWorker.postMessage({
+      endpoint: apiService.getBlocks,
+      callback: (data: GeoJsonFeature) => {
         setHdbData((prevData) => ({
           ...prevData,
           features: [
             ...prevData.features,
             {
-              ...geoJsonBatch,
-              properties: { ...geoJsonBatch.properties },
+              ...data,
+              properties: { ...data.properties },
             },
           ],
         }));
-      }
-    );
+      },
+    } as StreamWorkerInputArgs);
+
+    return () => streamWorker.terminate();
+  }, []);
+
+  useEffect(() => {
+    setHdbData({ ...initialGeojsonData });
     fetchMrtStations();
     getFlatTypes();
-    // return () => {
-    //   console.log("terminating dataworker:", dataWorker);
-    //   dataWorker.terminate();
-    // };
   }, []);
 
   // TODO make card fully minimised in mobile. the whole card is the filter coming from bottom by clicking a button at bottom. in pc the whole filter should be a default part of the ui (no need accordion buttons etc)
