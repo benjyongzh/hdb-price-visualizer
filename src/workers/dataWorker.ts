@@ -1,12 +1,12 @@
 // import * as Comlink from "comlink";
-import {
-  GeoJsonFeature,
-  StreamWorkerInputArgs,
-  StreamWorkerOutputArgs,
-} from "@/lib/types";
+// import {
+//   GeoJsonFeature,
+//   StreamWorkerInputArgs,
+//   StreamWorkerOutputArgs,
+// } from "@/lib/types";
 
 self.onmessage = async function (event) {
-  const { endpoint, callback } = event.data as StreamWorkerInputArgs;
+  const { endpoint, callback } = event.data;
 
   const response = await endpoint();
   const reader = response.body?.getReader();
@@ -36,7 +36,8 @@ self.onmessage = async function (event) {
     for (const batch of batches) {
       if (batch.trim()) {
         // Ensure non-empty line
-        const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
+        // const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
+        const geoJsonBatch = JSON.parse(batch);
         // console.log("batch:", geoJsonBatch);
         for (let i = 0; i < geoJsonBatch.length; i++) {
           try {
@@ -47,14 +48,14 @@ self.onmessage = async function (event) {
                 message: `Failed to parse GeoJSON batch: ${parseError}`,
                 batch: geoJsonBatch[i],
               },
-            } as StreamWorkerOutputArgs);
+            });
           }
         }
       }
     }
   }
 
-  self.postMessage({ done: true } as StreamWorkerOutputArgs);
+  self.postMessage({ done: true });
 };
 
 // async function streamGeojsonDataWorker(args: StreamDataWorkerArgs) {

@@ -42,6 +42,7 @@ const initialGeojsonData: GeoJsonData = {
 };
 
 import { StreamWorkerInputArgs, StreamWorkerOutputArgs } from "@/lib/types";
+import StreamWorker from "./workers/dataWorker?worker";
 
 function App() {
   const [hdbData, setHdbData] = useState<GeoJsonData>({
@@ -217,9 +218,7 @@ function App() {
 
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
-    const streamWorker = new Worker(
-      new URL("./workers/dataWorker.ts", import.meta.url)
-    );
+    const streamWorker = new StreamWorker();
 
     streamWorker.onmessage = (event) => {
       const { done, error } = event.data as StreamWorkerOutputArgs;
