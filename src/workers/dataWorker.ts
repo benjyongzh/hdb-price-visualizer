@@ -1,61 +1,59 @@
-// import * as Comlink from "comlink";
-// import {
-//   GeoJsonFeature,
-//   StreamWorkerInputArgs,
-//   StreamWorkerOutputArgs,
-// } from "@/lib/types";
+import { expose } from "comlink";
+import { GeoJsonFeature } from "@/lib/types";
 
-self.onmessage = async function (event) {
-  const { endpoint, callback } = event.data;
+export interface DataWorkerApi {
+  streamData: (endpoint: Function, callbackPerLine: Function) => Promise<void>;
+}
 
-  const response = await endpoint();
-  const reader = response.body?.getReader();
-  const decoder = new TextDecoder("utf-8");
+const dataWorkerApi = {
+  async streamData(endpoint: Function, callbackPerLine: Function) {
+    const response = await endpoint();
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder("utf-8");
 
-  if (!response.body) {
-    self.postMessage({
-      error: "ReadableStream is not supported in your environment.",
-    });
-    return;
-  }
+    if (!response.body) {
+      self.postMessage({
+        error: "ReadableStream is not supported in your environment.",
+      });
+      return;
+    }
 
-  let done = false;
-  let bufferedData = "";
+    let done = false;
+    let bufferedData = "";
 
-  while (!done) {
-    const { done: streamDone, value } = await reader.read();
-    done = streamDone;
-    bufferedData += decoder.decode(value, { stream: !done });
+    while (!done) {
+      const { done: streamDone, value } = await reader.read();
+      done = streamDone;
+      bufferedData += decoder.decode(value, { stream: !done });
 
-    // Split on newline to handle NDJSON format
-    const batches = bufferedData.split("\n");
-    // Keep the last line as a buffer in case it's incomplete
-    bufferedData = batches.pop() || "";
-    // console.log("batches:", batches);
+      // Split on newline to handle NDJSON format
+      const batches = bufferedData.split("\n");
+      // Keep the last line as a buffer in case it's incomplete
+      bufferedData = batches.pop() || "";
+      // console.log("batches:", batches);
 
-    for (const batch of batches) {
-      if (batch.trim()) {
-        // Ensure non-empty line
-        // const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
-        const geoJsonBatch = JSON.parse(batch);
-        // console.log("batch:", geoJsonBatch);
-        for (let i = 0; i < geoJsonBatch.length; i++) {
-          try {
-            callback(geoJsonBatch[i]);
-          } catch (parseError) {
-            self.postMessage({
-              error: {
-                message: `Failed to parse GeoJSON batch: ${parseError}`,
-                batch: geoJsonBatch[i],
-              },
-            });
+      for (const batch of batches) {
+        if (batch.trim()) {
+          // Ensure non-empty line
+          // const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
+          const geoJsonBatch = JSON.parse(batch);
+          // console.log("batch:", geoJsonBatch);
+          for (let i = 0; i < geoJsonBatch.length; i++) {
+            try {
+              await callbackPerLine({ data: geoJsonBatch[i] });
+            } catch (parseError) {
+              await callbackPerLine({
+                error: {
+                  message: `Failed to parse GeoJSON batch: ${parseError}`,
+                  batch: geoJsonBatch[i],
+                },
+              });
+            }
           }
         }
       }
     }
-  }
-
-  self.postMessage({ done: true });
+  },
 };
 
 // async function streamGeojsonDataWorker(args: StreamDataWorkerArgs) {
@@ -100,4 +98,4 @@ self.onmessage = async function (event) {
 //   }
 // }
 
-// Comlink.expose(streamGeojsonDataWorker);
+expose(dataWorkerApi);

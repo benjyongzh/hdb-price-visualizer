@@ -34,7 +34,7 @@ import {
   PRICE_SLIDER_MIN_VALUE,
   PRICE_SLIDER_MAX_VALUE,
 } from "./constants";
-// import * as Comlink from "comlink";
+import { wrap, proxy } from "comlink";
 
 const initialGeojsonData: GeoJsonData = {
   type: "FeatureCollection",
@@ -43,6 +43,7 @@ const initialGeojsonData: GeoJsonData = {
 
 import { StreamWorkerInputArgs, StreamWorkerOutputArgs } from "@/lib/types";
 import StreamWorker from "./workers/dataWorker?worker";
+import { DataWorkerApi } from "./workers/dataWorker";
 
 function App() {
   const [hdbData, setHdbData] = useState<GeoJsonData>({
@@ -219,47 +220,82 @@ function App() {
   // get all geojsondata without any properties yet. to show all the flats first
   useEffect(() => {
     const streamWorker = new StreamWorker();
+    const workerApi = wrap<DataWorkerApi>(streamWorker);
 
-    streamWorker.onmessage = (event) => {
-      const { done, error } = event.data as StreamWorkerOutputArgs;
-
-      if (error) {
-        // setError(error);
-        // setLoading(false);
-        console.log(error.message, error.batch);
-        streamWorker.terminate();
-        return;
+    const endpoint = proxy(() => apiService.getBlocks());
+    const callbackPerLine = proxy(
+      (callbackData: {
+        data: GeoJsonFeature | null;
+        error: { message: string; batch: GeoJsonFeature } | null;
+      }) => {
+        if (callbackData.data) {
+          setHdbData((prevData) => ({
+            ...prevData,
+            features: [
+              ...prevData.features,
+              {
+                ...callbackData.data!,
+                properties: { ...callbackData.data!.properties },
+              },
+            ],
+          }));
+        } else {
+          console.log(callbackData.error?.message, callbackData.error?.batch);
+        }
       }
+    );
 
-      if (done) {
-        // setLoading(false);
-        streamWorker.terminate();
-      }
-    };
+    // streamWorker.onmessage = (event) => {
+    //   const { done, error } = event.data as StreamWorkerOutputArgs;
 
-    streamWorker.onerror = (err) => {
-      // setError(err.message);
-      // setLoading(false);
-      console.log(err);
-      streamWorker.terminate();
-    };
+    //   if (error) {
+    //     // setError(error);
+    //     // setLoading(false);
+    //     console.log(error.message, error.batch);
+    //     streamWorker.terminate();
+    //     return;
+    //   }
+
+    //   if (done) {
+    //     // setLoading(false);
+    //     streamWorker.terminate();
+    //   }
+    // };
+
+    // streamWorker.onerror = (err) => {
+    //   // setError(err.message);
+    //   // setLoading(false);
+    //   console.log(err);
+    //   streamWorker.terminate();
+    // };
 
     // setLoading(true);
-    streamWorker.postMessage({
-      endpoint: apiService.getBlocks,
-      callback: (data: GeoJsonFeature) => {
-        setHdbData((prevData) => ({
-          ...prevData,
-          features: [
-            ...prevData.features,
-            {
-              ...data,
-              properties: { ...data.properties },
-            },
-          ],
-        }));
-      },
-    } as StreamWorkerInputArgs);
+    // streamWorker.postMessage({
+    //   endpoint: apiService.getBlocks,
+    //   callback: (data: GeoJsonFeature) => {
+    //     setHdbData((prevData) => ({
+    //       ...prevData,
+    //       features: [
+    //         ...prevData.features,
+    //         {
+    //           ...data,
+    //           properties: { ...data.properties },
+    //         },
+    //       ],
+    //     }));
+    //   },
+    // } as StreamWorkerInputArgs);
+    const fetchInitialBlockData = async () => {
+      try {
+        await workerApi.streamData(endpoint, callbackPerLine);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        streamWorker.terminate();
+      }
+    };
+
+    fetchInitialBlockData();
 
     return () => streamWorker.terminate();
   }, []);
