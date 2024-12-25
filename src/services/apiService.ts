@@ -1,22 +1,28 @@
 import apiClient from "./apiClient";
 
 const apiService = {
-  getBlocks: () => {
-    return fetch(import.meta.env.VITE_API_URL + "/blocks/geometry/", {
-      headers: { Accept: "application/json" },
-      mode: "cors", // If cross-origin
-    });
+  getBlocks: async () => {
+    const res = await fetch(
+      import.meta.env.VITE_API_URL + "/blocks/geometry/",
+      {
+        headers: { Accept: "application/json" },
+        mode: "cors", // If cross-origin
+      }
+    );
+    const data = await res.json(); // Convert response to a plain object
+    return data; // Return JSON-serializable data
   },
 
-  // getLatestAvgPrice: () => {
-  //   return apiClient.get("/blocks/price/latest-avg/");
-  // },
-
-  getLatestAvgPrice: () => {
-    return fetch(import.meta.env.VITE_API_URL + "/blocks/price/latest-avg/", {
-      headers: { Accept: "application/json" },
-      mode: "cors", // If cross-origin
-    });
+  getLatestAvgPrice: async () => {
+    const res = await fetch(
+      import.meta.env.VITE_API_URL + "/blocks/price/latest-avg/",
+      {
+        headers: { Accept: "application/json" },
+        mode: "cors", // If cross-origin
+      }
+    );
+    const data = await res.json(); // Convert response to a plain object
+    return data; // Return JSON-serializable data
   },
 
   getFlatTypes: () => {

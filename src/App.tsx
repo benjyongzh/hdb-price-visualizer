@@ -41,7 +41,6 @@ const initialGeojsonData: GeoJsonData = {
   features: [],
 };
 
-import { StreamWorkerInputArgs, StreamWorkerOutputArgs } from "@/lib/types";
 import StreamWorker from "./workers/dataWorker?worker";
 import { DataWorkerApi } from "./workers/dataWorker";
 
@@ -222,28 +221,24 @@ function App() {
     const streamWorker = new StreamWorker();
     const workerApi = wrap<DataWorkerApi>(streamWorker);
 
-    const endpoint = proxy(() => apiService.getBlocks());
-    const callbackPerLine = proxy(
-      (callbackData: {
-        data: GeoJsonFeature | null;
-        error: { message: string; batch: GeoJsonFeature } | null;
-      }) => {
-        if (callbackData.data) {
-          setHdbData((prevData) => ({
-            ...prevData,
-            features: [
-              ...prevData.features,
-              {
-                ...callbackData.data!,
-                properties: { ...callbackData.data!.properties },
-              },
-            ],
-          }));
-        } else {
-          console.log(callbackData.error?.message, callbackData.error?.batch);
-        }
-      }
-    );
+    const endpoint = proxy(apiService.getBlocks);
+    const callbackPerLine = proxy((callbackData: GeoJsonFeature) => {
+      // if (callbackData.data) {
+      console.log("line:", callbackData);
+      setHdbData((prevData) => ({
+        ...prevData,
+        features: [
+          ...prevData.features,
+          {
+            ...callbackData,
+            properties: { ...callbackData.properties },
+          },
+        ],
+      }));
+      // } else {
+      // console.log(callbackData.error?.message, callbackData.error?.batch);
+      // }
+    });
 
     // streamWorker.onmessage = (event) => {
     //   const { done, error } = event.data as StreamWorkerOutputArgs;
@@ -287,9 +282,11 @@ function App() {
     // } as StreamWorkerInputArgs);
     const fetchInitialBlockData = async () => {
       try {
+        // console.log(endpoint);
+        // console.log(callbackPerLine);
         await workerApi.streamData(endpoint, callbackPerLine);
       } catch (err) {
-        console.log(err);
+        console.log("dataWorkerApi:", err);
       } finally {
         streamWorker.terminate();
       }

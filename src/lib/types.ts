@@ -24,16 +24,3 @@ interface Line {
 }
 
 export type PriceColourIndex = Array<{ price: number; colour: string }>;
-
-export type StreamWorkerInputArgs = {
-  endpoint: Function;
-  callback: (geoJsonBatch: GeoJsonFeature) => void;
-};
-
-export type StreamWorkerOutputArgs = {
-  error: {
-    message: string;
-    batch: GeoJsonFeature;
-  } | null;
-  done: boolean | null;
-};
