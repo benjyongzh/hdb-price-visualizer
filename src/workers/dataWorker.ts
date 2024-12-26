@@ -12,7 +12,7 @@ export interface DataWorkerApi {
 const dataWorkerApi = {
   async streamData(endpoint: Function, callbackPerLine: Function) {
     console.log(endpoint);
-    const response = await endpoint(); //!problem here
+    const response = await endpoint(); //!problem here. need backend to respond with real json for each batch and for whole cache object
     const reader = response.body?.getReader();
     const decoder = new TextDecoder("utf-8");
 
