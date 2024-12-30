@@ -282,8 +282,7 @@ function App() {
     // } as StreamWorkerInputArgs);
     const fetchInitialBlockData = async () => {
       try {
-        // console.log(endpoint);
-        // console.log(callbackPerLine);
+        //TODO try without webworker first. to check that backend is fine
         await workerApi.streamData(endpoint, callbackPerLine);
       } catch (err) {
         console.log("dataWorkerApi:", err);
