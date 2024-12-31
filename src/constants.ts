@@ -23,3 +23,5 @@ export const DATA_NODATA_COLOUR: string = "hsl(217, 0%, 35%)";
 export const PRICE_SLIDER_DEFAULT_VALUE: number = 400000;
 export const PRICE_SLIDER_MIN_VALUE: number = 50000;
 export const PRICE_SLIDER_MAX_VALUE: number = 2000000;
+
+export const USE_WEB_WORKER: boolean = false;

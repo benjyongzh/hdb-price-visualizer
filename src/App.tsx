@@ -33,6 +33,7 @@ import {
   PRICE_SLIDER_DEFAULT_VALUE,
   PRICE_SLIDER_MIN_VALUE,
   PRICE_SLIDER_MAX_VALUE,
+  USE_WEB_WORKER,
 } from "./constants";
 import { wrap, proxy } from "comlink";
 
@@ -216,84 +217,136 @@ function App() {
     }
   }, []);
 
-  // get all geojsondata without any properties yet. to show all the flats first
-  useEffect(() => {
-    const streamWorker = new StreamWorker();
-    const workerApi = wrap<DataWorkerApi>(streamWorker);
+  const fetchStreamGeojsonData = useCallback(
+    async (endpoint: Function, callbackPerLine: Function) => {
+      const response = await endpoint(); // Your Django API endpoint
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
 
-    const endpoint = proxy(apiService.getBlocks);
-    const callbackPerLine = proxy((callbackData: GeoJsonFeature) => {
-      // if (callbackData.data) {
-      console.log("line:", callbackData);
+      if (!reader) return;
+
+      let done = false;
+      let bufferedData = "";
+
+      while (!done) {
+        const { done: streamDone, value } = await reader.read();
+        done = streamDone;
+        bufferedData += decoder.decode(value, { stream: !done });
+
+        // Split on newline to handle NDJSON format
+        const batches = bufferedData.split(",[],");
+        // Keep the last line as a buffer in case it's incomplete
+        bufferedData = batches.pop() || "";
+        // console.log("batches:", batches);
+
+        for (const batch of batches) {
+          if (batch.trim()) {
+            // Ensure non-empty line
+            console.log("batch;", batch);
+            const geoJsonBatch = JSON.parse(batch) as GeoJsonFeature[];
+            // console.log("batch:", geoJsonBatch);
+            for (let i = 0; i < geoJsonBatch.length; i++) {
+              try {
+                callbackPerLine(geoJsonBatch[i]);
+              } catch (parseError) {
+                console.error(
+                  "Failed to parse GeoJSON batch:",
+                  parseError,
+                  geoJsonBatch[i]
+                );
+              }
+            }
+          }
+        }
+      }
+    },
+    []
+  );
+
+  const geometryCallbackPerLine = useCallback(
+    (geoJsonBatch: GeoJsonFeature) => {
       setHdbData((prevData) => ({
         ...prevData,
         features: [
           ...prevData.features,
           {
-            ...callbackData,
-            properties: { ...callbackData.properties },
+            ...geoJsonBatch,
+            properties: { ...geoJsonBatch.properties },
           },
         ],
       }));
-      // } else {
-      // console.log(callbackData.error?.message, callbackData.error?.batch);
-      // }
-    });
+    },
+    []
+  );
 
-    // streamWorker.onmessage = (event) => {
-    //   const { done, error } = event.data as StreamWorkerOutputArgs;
+  // get all geojsondata without any properties yet. to show all the flats first
+  useEffect(() => {
+    //TODO try without webworker first. to check that backend is fine
+    if (USE_WEB_WORKER) {
+      const streamWorker = new StreamWorker();
+      const workerApi = wrap<DataWorkerApi>(streamWorker);
 
-    //   if (error) {
-    //     // setError(error);
-    //     // setLoading(false);
-    //     console.log(error.message, error.batch);
-    //     streamWorker.terminate();
-    //     return;
-    //   }
+      // const endpoint = proxy(apiService.getBlocks);
+      // const callbackPerLine = proxy(geometryCallbackPerLine);
+      const streamingCallback = proxy(() =>
+        fetchStreamGeojsonData(apiService.getBlocks, geometryCallbackPerLine)
+      );
 
-    //   if (done) {
-    //     // setLoading(false);
-    //     streamWorker.terminate();
-    //   }
-    // };
+      // streamWorker.onmessage = (event) => {
+      //   const { done, error } = event.data as StreamWorkerOutputArgs;
 
-    // streamWorker.onerror = (err) => {
-    //   // setError(err.message);
-    //   // setLoading(false);
-    //   console.log(err);
-    //   streamWorker.terminate();
-    // };
+      //   if (error) {
+      //     // setError(error);
+      //     // setLoading(false);
+      //     console.log(error.message, error.batch);
+      //     streamWorker.terminate();
+      //     return;
+      //   }
 
-    // setLoading(true);
-    // streamWorker.postMessage({
-    //   endpoint: apiService.getBlocks,
-    //   callback: (data: GeoJsonFeature) => {
-    //     setHdbData((prevData) => ({
-    //       ...prevData,
-    //       features: [
-    //         ...prevData.features,
-    //         {
-    //           ...data,
-    //           properties: { ...data.properties },
-    //         },
-    //       ],
-    //     }));
-    //   },
-    // } as StreamWorkerInputArgs);
-    const fetchInitialBlockData = async () => {
-      try {
-        //TODO try without webworker first. to check that backend is fine
-        await workerApi.streamData(endpoint, callbackPerLine);
-      } catch (err) {
-        console.log("dataWorkerApi:", err);
-      } finally {
-        streamWorker.terminate();
-      }
-    };
+      //   if (done) {
+      //     // setLoading(false);
+      //     streamWorker.terminate();
+      //   }
+      // };
 
-    fetchInitialBlockData();
+      // streamWorker.onerror = (err) => {
+      //   // setError(err.message);
+      //   // setLoading(false);
+      //   console.log(err);
+      //   streamWorker.terminate();
+      // };
 
-    return () => streamWorker.terminate();
+      // setLoading(true);
+      // streamWorker.postMessage({
+      //   endpoint: apiService.getBlocks,
+      //   callback: (data: GeoJsonFeature) => {
+      //     setHdbData((prevData) => ({
+      //       ...prevData,
+      //       features: [
+      //         ...prevData.features,
+      //         {
+      //           ...data,
+      //           properties: { ...data.properties },
+      //         },
+      //       ],
+      //     }));
+      //   },
+      // } as StreamWorkerInputArgs);
+      const fetchInitialBlockData = async () => {
+        try {
+          await workerApi.streamData(streamingCallback);
+        } catch (err) {
+          console.log("dataWorkerApi:", err);
+        } finally {
+          streamWorker.terminate();
+        }
+      };
+      fetchInitialBlockData();
+
+      return () => streamWorker.terminate();
+    } else {
+      fetchStreamGeojsonData(apiService.getBlocks, geometryCallbackPerLine);
+    }
   }, []);
 
   useEffect(() => {
