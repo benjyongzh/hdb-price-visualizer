@@ -247,6 +247,7 @@ function App() {
             // console.log("batch:", geoJsonBatch);
             for (let i = 0; i < geoJsonBatch.length; i++) {
               try {
+                // TODO add debouncer here to control frequency of executing callback
                 callbackPerLine(geoJsonBatch[i]);
               } catch (parseError) {
                 console.error(
